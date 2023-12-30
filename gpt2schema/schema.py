@@ -1,5 +1,6 @@
 import re
 import inspect
+import functools
 from inspect import Parameter
 from typing import Callable, TypeAlias, Any
 
@@ -10,6 +11,7 @@ class _GPTEnabled:
         self.func = func
         self.schema = FSchema(func)
         self.tags = kwargs.get("tags", [])
+        functools.update_wrapper(self, func)
 
     def __call__(self, *args, **kwargs):
         return self.func(*args, **kwargs)
