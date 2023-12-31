@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from gpt2schema import GPTEnabled
 
 ###########################################
@@ -496,3 +496,112 @@ def test_function_optional():
     }
     assert function_optional.schema.to_json() == expected_schema
     assert function_optional.tags == []
+
+##################################################
+#  Example function with typing.List annotation  #
+##################################################
+
+@GPTEnabled
+def function_typing_list(a: int, b: str, c: bool = False, d: List[int] = [1, 2, 3]):
+    """
+    This is a test function.
+
+    :param a: This is a parameter;
+    :param b: This is another parameter;
+    :param c: This is a boolean parameter;
+    :param d: This is a list parameter;
+    """
+    return a, b, c, d
+
+
+def test_function_typing_list():
+    # Check schema
+    expected_schema = {
+        "type": "function",
+        "function": {
+            "name": "function_typing_list",
+            "description": "This is a test function.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "a": {
+                        "type": "integer",
+                        "description": "This is a parameter",
+                    },
+                    "b": {
+                        "type": "string",
+                        "description": "This is another parameter",
+                    },
+                    "c": {
+                        "type": "boolean",
+                        "description": "This is a boolean parameter",
+                        "default": False,
+                    },
+                    "d": {
+                        "type": "array",
+                        "description": "This is a list parameter",
+                        "items": {
+                            "type": "integer",
+                        },
+                        "default": [1, 2, 3],
+                    },
+                },
+                "required": ["a", "b"],
+            },
+        },
+    }
+    assert function_typing_list.schema.to_json() == expected_schema
+    assert function_typing_list.tags == []
+
+##############################################################
+#  Example function with typing.List annotation but no type  #
+##############################################################
+
+@GPTEnabled
+def function_typing_list_no_type(a: int, b: str, c: bool = False, d: List = [1, 2, 3]):
+    """
+    This is a test function.
+
+    :param a: This is a parameter;
+    :param b: This is another parameter;
+    :param c: This is a boolean parameter;
+    :param d: This is a list parameter;
+    """
+    return a, b, c, d
+
+
+def test_function_typing_list_no_type():
+    # Check schema
+    expected_schema = {
+        "type": "function",
+        "function": {
+            "name": "function_typing_list_no_type",
+            "description": "This is a test function.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "a": {
+                        "type": "integer",
+                        "description": "This is a parameter",
+                    },
+                    "b": {
+                        "type": "string",
+                        "description": "This is another parameter",
+                    },
+                    "c": {
+                        "type": "boolean",
+                        "description": "This is a boolean parameter",
+                        "default": False,
+                    },
+                    "d": {
+                        "type": "array",
+                        "description": "This is a list parameter",
+                        "default": [1, 2, 3],
+                    },
+                },
+                "required": ["a", "b"],
+            },
+        },
+    }
+    assert function_typing_list_no_type.schema.to_json() == expected_schema
+    assert function_typing_list_no_type.tags == []
