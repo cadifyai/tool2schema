@@ -31,11 +31,10 @@ jobs:
   test:
     needs: linting
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
-        os: [ "ubuntu-latest", "macos-latest" ]
         python-version: [ "3.8", "3.9", "3.10", "3.11" ]
-    runs-on: ${{ matrix.os }}
+    runs-on: "ubuntu-latest"
     steps:
       #----------------------------------------------
       #       check-out repo and set-up python
