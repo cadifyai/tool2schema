@@ -6,7 +6,7 @@ Inspired by [janekb04/py2gpt](https://github.com/janekb04/py2gpt) and [fastai/lm
 
 ## Why gpt2schema?
 
-The OpenAI API supports [function calling](https://platform.openai.com/docs/guides/function-calling). However, to tell GPT what functions it can call, you must send the functions [in a JSON format](https://platform.openai.com/docs/api-reference/chat/create#chat-create-tool_choice). With `gpt2schema`, functions can be automatically converted to the correct JSON schema!
+The OpenAI API supports [function calling](https://platform.openai.com/docs/guides/function-calling). However, to tell GPT what functions it can call, you must send the functions [in a JSON format](https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools). With `gpt2schema`, functions can be automatically converted to the correct JSON schema!
 
 ## Usage
 
@@ -16,7 +16,7 @@ The OpenAI API supports [function calling](https://platform.openai.com/docs/guid
 - Parameter default values
 - Docstring with parameter descriptions
 
-The docstring must be of a specific format. An example function is defined below that utilises all of the above features. 
+The docstring must be of a specific format. An example function is defined below that utilises all of the above features.
 
 ```python
 def my_function(a: int, b: str = "Hello"):
@@ -49,7 +49,7 @@ def my_function(a: int, b: str = "Hello"):
 The schema can then be accessed using the `schema` attribute.
 
 ```python
-my_function.schema
+my_function.schema.to_json()
 ```
 
 This returns the function schema in JSON format.
