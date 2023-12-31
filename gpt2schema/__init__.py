@@ -1,1 +1,1 @@
-from .schema import GPTEnabled
+from .schema import GPTEnabled  # noqa: F401

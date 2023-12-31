@@ -5,6 +5,10 @@ from inspect import Parameter
 from typing import Callable, TypeAlias, Any
 
 
+# Type aliases
+ToolSchema: TypeAlias = dict[str, Any]
+
+
 class _GPTEnabled:
     """A decorator for AI enabled functions."""
     def __init__(self, func, **kwargs) -> None:
@@ -33,7 +37,6 @@ def GPTEnabled(func=None, **kwargs):
         return wrapper
 
 
-ToolSchema: TypeAlias = dict[str, Any]
 class FSchema:
     '''Automatically create a function schema.'''
 
@@ -48,11 +51,11 @@ class FSchema:
     def __init__(self, f: Callable):
         self.f = f
         self.schema = FSchema.schema(f)
-    
+
     def to_json(self):
         '''Convert to JSON'''
         return self.schema
-    
+
     def add_enum(self, n: str, enum: list) -> 'FSchema':
         '''
         Add enum property to a particular function parameter.
@@ -63,7 +66,7 @@ class FSchema:
         '''
         self.schema["function"]["parameters"]["properties"][n]["enum"] = enum
         return self
-    
+
     @staticmethod
     def schema(f: Callable):
         """
@@ -93,7 +96,8 @@ class FSchema:
         '''
         parameters = dict()
         for n, o in inspect.signature(f).parameters.items():
-            if n == 'kwargs': continue  # Skip kwargs
+            if n == 'kwargs':
+                continue  # Skip kwargs
             parameters[n] = {}
             if o.annotation != Parameter.empty:
                 parameters[n]["type"] = FSchema.param_type(o)
@@ -111,7 +115,8 @@ class FSchema:
         ''' Get the list of required parameters for a function. '''
         req_params = []
         for n, o in inspect.signature(f).parameters.items():
-            if n == 'kwargs': continue  # Skip kwargs
+            if n == 'kwargs':
+                continue  # Skip kwargs
             if o.default == Parameter.empty:
                 req_params.append(n)
         return req_params
@@ -126,8 +131,8 @@ class FSchema:
         # Note interesting behaviour from o.annotation:
         # (o.annotation, o.annotation.__name__) = ("bool", <class 'bool')
         # (o.annotation, o.annotation.__name__) = (list[int], "list")
-        assert o.annotation.__name__ == "list", "Cannot extract inner type from non-list parameter '%s'"%str(o.annotation)
-        inner_type = str(o.annotation)[len("list["):-len("]")] # Extract 'int' from 'list[int]'
+        assert o.annotation.__name__ == "list", f"Cannot extract inner type from non-list parameter '{str(o.annotation)}'"
+        inner_type = str(o.annotation)[len("list["):-len("]")]  # Extract 'int' from 'list[int]'
         if inner_type in FSchema.TYPE_MAP:
             return FSchema.TYPE_MAP[inner_type]
         return 'object'
