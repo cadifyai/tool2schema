@@ -1,9 +1,11 @@
-from typing import Optional, List
+from typing import List, Optional
+
 from gpt2schema import GPTEnabled
 
 ###########################################
 #  Example function to test with no tags  #
 ###########################################
+
 
 @GPTEnabled
 def function(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
@@ -57,9 +59,11 @@ def test_function():
     assert function.schema.to_json() == expected_schema
     assert function.tags == []
 
+
 ########################################
 #  Example function to test with tags  #
 ########################################
+
 
 @GPTEnabled(tags=["test"])
 def function_tags(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
@@ -113,9 +117,11 @@ def test_function_tags():
     assert function_tags.schema.to_json() == expected_schema
     assert function_tags.tags == ["test"]
 
+
 ########################################
 #  Example function to test with enum  #
 ########################################
+
 
 @GPTEnabled
 def function_enum(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
@@ -128,6 +134,8 @@ def function_enum(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     :param d: This is a list parameter;
     """
     return a, b, c, d
+
+
 function_enum.schema.add_enum("a", [1, 2, 3])
 
 
@@ -171,9 +179,11 @@ def test_function_enum():
     assert function_enum.schema.to_json() == expected_schema
     assert function_enum.tags == []
 
+
 #########################################
 #  Example function with no parameters  #
 #########################################
+
 
 @GPTEnabled
 def function_no_params():
@@ -195,9 +205,11 @@ def test_function_no_params():
     assert function_no_params.schema.to_json() == expected_schema
     assert function_no_params.tags == []
 
+
 ##########################################
 #  Example function with no description  #
 ##########################################
+
 
 @GPTEnabled
 def function_no_description(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
@@ -231,7 +243,7 @@ def test_function_no_description():
                     "c": {
                         "type": "boolean",
                         "description": "This is a boolean parameter",
-                        "default": False
+                        "default": False,
                     },
                     "d": {
                         "type": "array",
@@ -249,12 +261,16 @@ def test_function_no_description():
     assert function_no_description.schema.to_json() == expected_schema
     assert function_no_description.tags == []
 
+
 ###################################################
 #  Example function with no parameter docstrings  #
 ###################################################
 
+
 @GPTEnabled
-def function_no_param_docstrings(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
+def function_no_param_docstrings(
+    a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]
+):
     """
     This is a test function.
     """
@@ -296,12 +312,16 @@ def test_function_no_param_docstrings():
     assert function_no_param_docstrings.schema.to_json() == expected_schema
     assert function_no_param_docstrings.tags == []
 
+
 #####################################################
 #  Example function with no parameter descriptions  #
 #####################################################
 
+
 @GPTEnabled
-def function_no_param_descriptions(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
+def function_no_param_descriptions(
+    a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]
+):
     """
     This is a test function.
 
@@ -348,9 +368,11 @@ def test_function_no_param_descriptions():
     assert function_no_param_descriptions.schema.to_json() == expected_schema
     assert function_no_param_descriptions.tags == []
 
+
 ########################################
 #  Example function with no docstring  #
 ########################################
+
 
 @GPTEnabled
 def function_no_docstring(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
@@ -391,9 +413,11 @@ def test_function_no_docstring():
     assert function_no_docstring.schema.to_json() == expected_schema
     assert function_no_docstring.tags == []
 
+
 #######################################################
 #  Example function with list annotation but no type  #
 #######################################################
+
 
 @GPTEnabled
 def function_list_no_type(a: int, b: str, c: bool = False, d: list = [1, 2, 3]):
@@ -444,9 +468,11 @@ def test_function_list_no_type():
     assert function_list_no_type.schema.to_json() == expected_schema
     assert function_list_no_type.tags == []
 
+
 ####################################################
 #  Example function with Optional type annotation  #
 ####################################################
+
 
 @GPTEnabled
 def function_optional(a: int, b: str, c: bool = False, d: Optional[int] = None):
@@ -497,9 +523,11 @@ def test_function_optional():
     assert function_optional.schema.to_json() == expected_schema
     assert function_optional.tags == []
 
+
 ##################################################
 #  Example function with typing.List annotation  #
 ##################################################
+
 
 @GPTEnabled
 def function_typing_list(a: int, b: str, c: bool = False, d: List[int] = [1, 2, 3]):
@@ -553,9 +581,11 @@ def test_function_typing_list():
     assert function_typing_list.schema.to_json() == expected_schema
     assert function_typing_list.tags == []
 
+
 ##############################################################
 #  Example function with typing.List annotation but no type  #
 ##############################################################
+
 
 @GPTEnabled
 def function_typing_list_no_type(a: int, b: str, c: bool = False, d: List = [1, 2, 3]):

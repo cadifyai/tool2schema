@@ -23,24 +23,26 @@ class _GPTEnabled:
 
 
 def GPTEnabled(func=None, **kwargs):
-    """ Decorator to generate a function schema for OpenAI. """
+    """Decorator to generate a function schema for OpenAI."""
     if func:
         return _GPTEnabled(func, **kwargs)
     else:
+
         def wrapper(function):
             return _GPTEnabled(function, **kwargs)
+
         return wrapper
 
 
 class FunctionSchema:
-    """ Automatically create a function schema. """
+    """Automatically create a function schema."""
 
     TYPE_MAP = {
         "int": "integer",
         "float": "number",
         "str": "string",
         "bool": "boolean",
-        "list": "array"
+        "list": "array",
     }
 
     def __init__(self, f: Callable):
@@ -48,7 +50,7 @@ class FunctionSchema:
         self.schema = FunctionSchema.schema(f)
 
     def to_json(self):
-        """ Convert schema to JSON. """
+        """Convert schema to JSON."""
         return self.schema
 
     def add_enum(self, n: str, enum: list) -> "FunctionSchema":
@@ -69,7 +71,7 @@ class FunctionSchema:
 
         :param f: Function for which to construct the schema;
         """
-        fschema = {"type": "function", "function": { "name": f.__name__ }}
+        fschema = {"type": "function", "function": {"name": f.__name__}}
         fschema = FunctionSchema._function_description(f, fschema)
         fschema = FunctionSchema._param_schema(f, fschema)
         return fschema
@@ -82,7 +84,9 @@ class FunctionSchema:
         :param f: Function from which to extract description;
         """
         if docstring := f.__doc__:  # Check if docstring exists
-            docstring = " ".join([x.strip() for x in docstring.replace("\n", " ").split()])
+            docstring = " ".join(
+                [x.strip() for x in docstring.replace("\n", " ").split()]
+            )
             if desc := re.findall(r"(.*?):param", docstring):
                 fschema["function"]["description"] = desc[0].strip()
                 return fschema
@@ -97,9 +101,9 @@ class FunctionSchema:
         :param f: Function to extra parameter schema from;
         """
         param_schema = {"type": "object", "properties": {}}
-        if (params := FunctionSchema._param_properties(f)):
+        if params := FunctionSchema._param_properties(f):
             param_schema["properties"] = params
-            if (required_params := FunctionSchema._param_required(f)):
+            if required_params := FunctionSchema._param_required(f):
                 param_schema["required"] = required_params
             fschema["function"]["parameters"] = param_schema
         return fschema
@@ -153,7 +157,9 @@ class FunctionSchema:
                 if (sub_type := FunctionSchema._sub_type(o)) is not None:
                     pschema["items"] = {"type": sub_type}
             elif o.annotation.__name__ in FunctionSchema.TYPE_MAP:
-                pschema["type"] = FunctionSchema.TYPE_MAP.get(o.annotation.__name__, "object")
+                pschema["type"] = FunctionSchema.TYPE_MAP.get(
+                    o.annotation.__name__, "object"
+                )
         return pschema
 
     @staticmethod
@@ -181,7 +187,9 @@ class FunctionSchema:
         :param n: Name of the parameter;
         """
         if f.__doc__ is not None:
-            docstring = " ".join([x.strip() for x in f.__doc__.replace("\n", " ").split()])
+            docstring = " ".join(
+                [x.strip() for x in f.__doc__.replace("\n", " ").split()]
+            )
             params = re.findall(r":param (.*?): (.*?);", docstring)
             for name, desc in params:
                 if name == n:
