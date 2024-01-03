@@ -2,8 +2,8 @@ import functools
 import inspect
 import re
 from inspect import Parameter
-from typing import Callable, Optional
 from types import ModuleType
+from typing import Callable, Optional
 
 
 def FindGPTEnabled(module: ModuleType) -> list[Callable]:

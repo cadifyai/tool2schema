@@ -1,12 +1,13 @@
 from typing import List, Optional
 
-from gpt2schema import GPTEnabled, FindGPTEnabled
-from . import functions
+from gpt2schema import FindGPTEnabled, GPTEnabled
 
+from . import functions
 
 #########################
 #  Test FindGPTEnabled  #
 #########################
+
 
 def test_FindGPTEnabled():
     # Check that the function is found
@@ -149,6 +150,8 @@ def function_enum(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     :param d: This is a list parameter;
     """
     return a, b, c, d
+
+
 function_enum.schema.add_enum("a", [1, 2, 3])  # noqa
 
 
