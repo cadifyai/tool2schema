@@ -2,7 +2,17 @@ import functools
 import inspect
 import re
 from inspect import Parameter
+from types import ModuleType
 from typing import Callable, Optional
+
+
+def FindGPTEnabled(module: ModuleType) -> list[Callable]:
+    """
+    Find all functions with the GPTEnabled decorator.
+
+    :param module: Module to search for GPTEnabled functions;
+    """
+    return [x for x in module.__dict__.values() if hasattr(x, "gpt_enabled")]
 
 
 class _GPTEnabled:

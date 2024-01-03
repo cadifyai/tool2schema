@@ -1,6 +1,22 @@
 from typing import List, Optional
 
-from gpt2schema import GPTEnabled
+from gpt2schema import FindGPTEnabled, GPTEnabled
+
+from . import functions
+
+#########################
+#  Test FindGPTEnabled  #
+#########################
+
+
+def test_FindGPTEnabled():
+    # Check that the function is found
+    assert len(FindGPTEnabled(functions)) == 2
+    assert functions.function in FindGPTEnabled(functions)
+    assert functions.function_tags in FindGPTEnabled(functions)
+    # Check that the function is not found
+    assert functions.function_not_enabled not in FindGPTEnabled(functions)
+
 
 ###########################################
 #  Example function to test with no tags  #
@@ -136,7 +152,7 @@ def function_enum(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     return a, b, c, d
 
 
-function_enum.schema.add_enum("a", [1, 2, 3])
+function_enum.schema.add_enum("a", [1, 2, 3])  # noqa
 
 
 def test_function_enum():
