@@ -15,6 +15,29 @@ def FindGPTEnabled(module: ModuleType) -> list[Callable]:
     return [x for x in module.__dict__.values() if hasattr(x, "gpt_enabled")]
 
 
+def FindGPTEnabledByName(module: ModuleType, name: str) -> Optional[Callable]:
+    """
+    Find a function with the GPTEnabled decorator by name.
+
+    :param module: Module to search for GPTEnabled functions;
+    :param name: Name of the function to find;
+    """
+    for func in FindGPTEnabled(module):
+        if func.__name__ == name:
+            return func
+    return None
+
+
+def FindGPTEnabledByTag(module: ModuleType, tag: str) -> list[Callable]:
+    """
+    Find all functions with the GPTEnabled decorator by tag.
+
+    :param module: Module to search for GPTEnabled functions;
+    :param tag: Tag to search for;
+    """
+    return [x for x in FindGPTEnabled(module) if x.has(tag)]
+
+
 class _GPTEnabled:
     def __init__(self, func, **kwargs) -> None:
         self.func = func
