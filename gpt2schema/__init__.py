@@ -1,1 +1,6 @@
-from .schema import FindGPTEnabled, GPTEnabled  # noqa: F401
+from .schema import (
+    FindGPTEnabled,
+    FindGPTEnabledByName,  # noqa: F401
+    FindGPTEnabledByTag,
+    GPTEnabled,
+)

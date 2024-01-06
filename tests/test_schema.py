@@ -1,6 +1,11 @@
 from typing import List, Optional
 
-from gpt2schema import FindGPTEnabled, GPTEnabled
+from gpt2schema import (
+    FindGPTEnabled,
+    FindGPTEnabledByName,
+    FindGPTEnabledByTag,
+    GPTEnabled,
+)
 
 from . import functions
 
@@ -16,6 +21,31 @@ def test_FindGPTEnabled():
     assert functions.function_tags in FindGPTEnabled(functions)
     # Check that the function is not found
     assert functions.function_not_enabled not in FindGPTEnabled(functions)
+
+
+###############################
+#  Test FindGPTEnabledByName  #
+###############################
+
+
+def test_FindGPTEnabledByName():
+    # Check that the function is found
+    assert FindGPTEnabledByName(functions, "function") == functions.function
+    assert FindGPTEnabledByName(functions, "function_tags") == functions.function_tags
+    # Check that the function is not found
+    assert FindGPTEnabledByName(functions, "function_not_enabled") is None
+
+
+##############################
+#  Test FindGPTEnabledByTag  #
+##############################
+
+
+def test_FindGPTEnabledByTag():
+    # Check that the function is found
+    assert functions.function_tags in FindGPTEnabledByTag(functions, "test")
+    # Check that the function is not found
+    assert functions.function not in FindGPTEnabledByTag(functions, "test")
 
 
 ###########################################
