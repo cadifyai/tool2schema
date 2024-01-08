@@ -15,6 +15,15 @@ def FindGPTEnabled(module: ModuleType) -> list[Callable]:
     return [x for x in module.__dict__.values() if hasattr(x, "gpt_enabled")]
 
 
+def FindGPTEnabledSchemas(module: ModuleType) -> list[dict]:
+    """
+    Find all function schemas with the GPTEnabled decorator.
+
+    :param module: Module to search for GPTEnabled functions;
+    """
+    return [x.schema.to_json() for x in FindGPTEnabled(module)]
+
+
 def FindGPTEnabledByName(module: ModuleType, name: str) -> Optional[Callable]:
     """
     Find a function with the GPTEnabled decorator by name.

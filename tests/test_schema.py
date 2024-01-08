@@ -2,6 +2,7 @@ from typing import List, Optional
 
 from gpt2schema import (
     FindGPTEnabled,
+    FindGPTEnabledSchemas,
     FindGPTEnabledByName,
     FindGPTEnabledByTag,
     GPTEnabled,
@@ -21,6 +22,18 @@ def test_FindGPTEnabled():
     assert functions.function_tags in FindGPTEnabled(functions)
     # Check that the function is not found
     assert functions.function_not_enabled not in FindGPTEnabled(functions)
+
+
+################################
+#  Test FindGPTEnabledSchemas  #
+################################
+
+
+def test_FindGPTEnabledSchemas():
+    # Check that the function is found
+    assert len(FindGPTEnabledSchemas(functions)) == 2
+    assert functions.function.schema.to_json() in FindGPTEnabledSchemas(functions)
+    assert functions.function_tags.schema.to_json() in FindGPTEnabledSchemas(functions)
 
 
 ###############################
