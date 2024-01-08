@@ -2,9 +2,9 @@ from typing import List, Optional
 
 from gpt2schema import (
     FindGPTEnabled,
-    FindGPTEnabledSchemas,
     FindGPTEnabledByName,
     FindGPTEnabledByTag,
+    FindGPTEnabledSchemas,
     GPTEnabled,
 )
 
