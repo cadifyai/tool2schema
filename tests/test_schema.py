@@ -6,6 +6,7 @@ from gpt2schema import (
     FindGPTEnabledByTag,
     FindGPTEnabledSchemas,
     GPTEnabled,
+    SchemaType,
 )
 
 from . import functions
@@ -34,6 +35,28 @@ def test_FindGPTEnabledSchemas():
     assert len(FindGPTEnabledSchemas(functions)) == 2
     assert functions.function.schema.to_json() in FindGPTEnabledSchemas(functions)
     assert functions.function_tags.schema.to_json() in FindGPTEnabledSchemas(functions)
+
+
+def test_FindGPTEnabledSchemas_API():
+    # Check that the function is found
+    assert len(FindGPTEnabledSchemas(functions, schema_type=SchemaType.API)) == 2
+    assert functions.function.schema.to_json(SchemaType.API) in FindGPTEnabledSchemas(
+        functions, schema_type=SchemaType.API
+    )
+    assert functions.function_tags.schema.to_json(
+        SchemaType.API
+    ) in FindGPTEnabledSchemas(functions, schema_type=SchemaType.API)
+
+
+def test_FindGPTEnabledSchemas_TUNE():
+    # Check that the function is found
+    assert len(FindGPTEnabledSchemas(functions, schema_type=SchemaType.TUNE)) == 2
+    assert functions.function.schema.to_json(SchemaType.TUNE) in FindGPTEnabledSchemas(
+        functions, schema_type=SchemaType.TUNE
+    )
+    assert functions.function_tags.schema.to_json(
+        SchemaType.TUNE
+    ) in FindGPTEnabledSchemas(functions, schema_type=SchemaType.TUNE)
 
 
 ###############################
@@ -119,6 +142,43 @@ def test_function():
     assert function.tags == []
 
 
+def test_function_tune():
+    # Check schema
+    expected_schema = {
+        "name": "function",
+        "description": "This is a test function.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "a": {
+                    "type": "integer",
+                    "description": "This is a parameter",
+                },
+                "b": {
+                    "type": "string",
+                    "description": "This is another parameter",
+                },
+                "c": {
+                    "type": "boolean",
+                    "description": "This is a boolean parameter",
+                    "default": False,
+                },
+                "d": {
+                    "type": "array",
+                    "description": "This is a list parameter",
+                    "items": {
+                        "type": "integer",
+                    },
+                    "default": [1, 2, 3],
+                },
+            },
+            "required": ["a", "b"],
+        },
+    }
+    assert function.schema.to_json(SchemaType.TUNE) == expected_schema
+    assert function.tags == []
+
+
 ########################################
 #  Example function to test with tags  #
 ########################################
@@ -174,6 +234,43 @@ def test_function_tags():
         },
     }
     assert function_tags.schema.to_json() == expected_schema
+    assert function_tags.tags == ["test"]
+
+
+def test_function_tags_tune():
+    # Check schema
+    expected_schema = {
+        "name": "function_tags",
+        "description": "This is a test function.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "a": {
+                    "type": "integer",
+                    "description": "This is a parameter",
+                },
+                "b": {
+                    "type": "string",
+                    "description": "This is another parameter",
+                },
+                "c": {
+                    "type": "boolean",
+                    "description": "This is a boolean parameter",
+                    "default": False,
+                },
+                "d": {
+                    "type": "array",
+                    "description": "This is a list parameter",
+                    "items": {
+                        "type": "integer",
+                    },
+                    "default": [1, 2, 3],
+                },
+            },
+            "required": ["a", "b"],
+        },
+    }
+    assert function_tags.schema.to_json(SchemaType.TUNE) == expected_schema
     assert function_tags.tags == ["test"]
 
 

@@ -1,9 +1,17 @@
 import functools
 import inspect
 import re
+from enum import Enum
 from inspect import Parameter
 from types import ModuleType
 from typing import Callable, Optional
+
+
+class SchemaType(Enum):
+    """Enum for schema types."""
+
+    API = 0
+    TUNE = 1
 
 
 def FindGPTEnabled(module: ModuleType) -> list[Callable]:
@@ -15,13 +23,16 @@ def FindGPTEnabled(module: ModuleType) -> list[Callable]:
     return [x for x in module.__dict__.values() if hasattr(x, "gpt_enabled")]
 
 
-def FindGPTEnabledSchemas(module: ModuleType) -> list[dict]:
+def FindGPTEnabledSchemas(
+    module: ModuleType, schema_type: SchemaType = SchemaType.API
+) -> list[dict]:
     """
     Find all function schemas with the GPTEnabled decorator.
 
     :param module: Module to search for GPTEnabled functions;
+    :param schema_type: Type of schema to return;
     """
-    return [x.schema.to_json() for x in FindGPTEnabled(module)]
+    return [x.schema.to_json(schema_type) for x in FindGPTEnabled(module)]
 
 
 def FindGPTEnabledByName(module: ModuleType, name: str) -> Optional[Callable]:
@@ -91,8 +102,13 @@ class FunctionSchema:
         self.f = f
         self.schema = FunctionSchema.schema(f)
 
-    def to_json(self):
-        """Convert schema to JSON."""
+    def to_json(self, schema_type: SchemaType = SchemaType.API) -> dict:
+        """
+        Convert schema to JSON.
+        :param schema_type: Type of schema to return;
+        """
+        if schema_type == SchemaType.TUNE:
+            return self.schema["function"]
         return self.schema
 
     def add_enum(self, n: str, enum: list) -> "FunctionSchema":

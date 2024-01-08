@@ -4,4 +4,5 @@ from .schema import (
     FindGPTEnabledByTag,
     FindGPTEnabledSchemas,
     GPTEnabled,
+    SchemaType,
 )
