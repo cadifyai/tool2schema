@@ -3,4 +3,5 @@ from .schema import (
     FindGPTEnabledByName,  # noqa: F401
     FindGPTEnabledByTag,
     GPTEnabled,
+    SchemaType,
 )
