@@ -4,6 +4,7 @@ from gpt2schema import (
     FindGPTEnabled,
     FindGPTEnabledByName,
     FindGPTEnabledByTag,
+    FindGPTEnabledSchemas,
     GPTEnabled,
     SchemaType,
 )
