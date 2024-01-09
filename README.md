@@ -1,16 +1,16 @@
-# gpt2schema
+# tool2schema
 
 A library to convert Python functions to schemas supported by the OpenAI API.
 
 Inspired by [janekb04/py2gpt](https://github.com/janekb04/py2gpt) and [fastai/lm-hackers](https://github.com/fastai/lm-hackers).
 
-## Why gpt2schema?
+## Why tool2schema?
 
-The OpenAI API supports [function calling](https://platform.openai.com/docs/guides/function-calling). However, to tell GPT what functions it can call, you must send the functions [in a JSON format](https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools). With `gpt2schema`, functions can be automatically converted to the correct JSON schema!
+The OpenAI API supports [function calling](https://platform.openai.com/docs/guides/function-calling). However, to tell GPT what functions it can call, you must send the functions [in a JSON format](https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools). With `tool2schema`, functions can be automatically converted to the correct JSON schema!
 
 ## Usage
 
-`gpt2schema` uses certain features of your function to correctly populate the schema.
+`tool2schema` uses certain features of your function to correctly populate the schema.
 
 - Parameter type hints
 - Parameter default values
@@ -33,7 +33,7 @@ def my_function(a: int, b: str = "Hello"):
 To get the schema for this function, simply use the `GPTEnabled` decorator.
 
 ```python
-from gpt2schema import GPTEnabled
+from tool2schema import GPTEnabled
 
 @GPTEnabled
 def my_function(a: int, b: str = "Hello"):
