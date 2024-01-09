@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from gpt2schema import (
+from tool2schema import (
     FindGPTEnabled,
     FindGPTEnabledByName,
     FindGPTEnabledByTag,

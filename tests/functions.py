@@ -1,4 +1,4 @@
-from gpt2schema import GPTEnabled
+from tool2schema import GPTEnabled
 
 
 @GPTEnabled
