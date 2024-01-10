@@ -10,6 +10,54 @@ The OpenAI API supports [function calling](https://platform.openai.com/docs/guid
 
 ## Usage
 
+On all functions that you would like to get JSON schema for, simply add the `GPTEnabled` decorator.
+
+```python
+# my_functions.py
+from tool2schema import GPTEnabled
+
+@GPTEnabled
+def my_function2(a: int, b: str = "Hello"):
+    """
+    Example function description.
+
+    :param a: First parameter;
+    :param b: Second parameter;
+    """
+    # Function code here...
+
+@GPTEnabled(tags=["tag1"])
+def my_function2(a: int, b: str = "Hello"):
+    """
+    Example function description.
+
+    :param a: First parameter;
+    :param b: Second parameter;
+    """
+    # Function code here...
+```
+
+`tool2schema` provides some methods to easily retrieve your functions.
+
+```python
+import my_functions  # Module containing your functions
+from tool2schema import FindGPTEnabled
+
+# Return functions with GPTEnabled decorator
+gpt_enable = FindGPTEnabled(my_functions)
+
+# Return all function schemas
+schemas = FindGPTEnabledSchemas(my_functions)
+
+# Return function with given name
+f = FindGPTEnabledByName(my_functions, "my_function1")
+
+# Returns all functions with given tag
+fs = FindGPTEnabledByTag(my_functions, "tag1")
+```
+
+## How it Works
+
 `tool2schema` uses certain features of your function to correctly populate the schema.
 
 - Parameter type hints
@@ -30,55 +78,15 @@ def my_function(a: int, b: str = "Hello"):
 
 **Note** the `;` at the end of each parameter description. This is used to indicate the end of the parameter description.
 
-To get the schema for this function, simply use the `GPTEnabled` decorator.
+To get the schema for this function, simply use the `GPTEnabled` decorator. The decorator will return a class with some additional attributes but can still be called as a function.
 
-```python
-from tool2schema import GPTEnabled
-
-@GPTEnabled
-def my_function(a: int, b: str = "Hello"):
-    """
-    Example function description.
-
-    :param a: First parameter;
-    :param b: Second parameter;
-    """
-    # Function code here...
-```
-
-The schema can then be accessed using the `schema` attribute.
+The schema of the function be accessed using the `schema` attribute.
 
 ```python
 my_function.schema.to_json()
 ```
 
 This returns the function schema in JSON format.
-
-```yaml
-{
-  'type': 'function',
-  'function': {
-    'name': 'my_function',
-    'description': 'Example function description.',
-    'parameters': {
-      'type': 'object',
-      'properties': {
-        'a': {
-          'type': 'int',
-          'description': "First parameter",
-        #   'enum': ['cube', 'screwdriver']
-        },
-        'b': {
-          'type': 'str',
-          'default': 'Hello',
-          'description': 'Second parameter'
-        }
-      },
-      'required': ['name']
-    }
-  }
-}
-```
 
 ### Supported Parameter Types
 
@@ -110,33 +118,6 @@ my_function.schema.add_enum("b", ["yes", "no"])
 ```
 
 The schema will then be updated to include the `enum` keyword.
-
-```yaml
-{
-  'type': 'function',
-  'function': {
-    'name': 'my_function',
-    'description': 'Example function description.',
-    'parameters': {
-      'type': 'object',
-      'properties': {
-        'a': {
-          'type': 'int',
-          'description': "First parameter",
-        },
-        'b': {
-          'type': 'str',
-          'default': 'Hello',
-          'description': 'Second parameter'
-          'enum': ['yes', 'no']
-        }
-      },
-      'required': ['name']
-    }
-  }
-}
-
-```
 
 ### Tags
 
