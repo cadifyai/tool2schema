@@ -5,6 +5,8 @@ description = "A library to generate function schemas for use in the OpenAI API.
 authors = ["Angus Stewart <siliconlad@protonmail.com>"]
 license = "Apache-2.0"
 readme = "README.md"
+repository="https://github.com/cadifyai/tool2schema"
+keywords=["openai", "llm"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
