@@ -1,5 +1,6 @@
 # Python
 __pycache__/
+dist/
 
 # MacOS
 .DS_Store
