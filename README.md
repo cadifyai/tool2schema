@@ -10,6 +10,14 @@ Inspired by [janekb04/py2gpt](https://github.com/janekb04/py2gpt) and [fastai/lm
 
 The OpenAI API supports [function calling](https://platform.openai.com/docs/guides/function-calling). However, to tell GPT what functions it can call, you must send the functions [in a JSON format](https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools). With `tool2schema`, functions can be automatically converted to the correct JSON schema!
 
+## Installation
+
+You can install `tool2schema` using `pip`.
+
+```bash
+pip3 install tool2schema
+```
+
 ## Usage
 
 On all functions that you would like to get JSON schema for, simply add the `GPTEnabled` decorator.
