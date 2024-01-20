@@ -3,6 +3,7 @@ from .schema import (
     FindGPTEnabledByName,
     FindGPTEnabledByTag,
     FindGPTEnabledSchemas,
+    SaveGPTEnabled,
     GPTEnabled,
     SchemaType,
 )
