@@ -51,19 +51,23 @@ def my_function2(a: int, b: str = "Hello"):
 
 ```python
 import my_functions  # Module containing your functions
-from tool2schema import FindGPTEnabled
+import tool2schema
 
 # Return functions with GPTEnabled decorator
-gpt_enable = FindGPTEnabled(my_functions)
+gpt_enable = tool2schema.FindGPTEnabled(my_functions)
 
 # Return all function schemas
-schemas = FindGPTEnabledSchemas(my_functions)
+schemas = tool2schema.FindGPTEnabledSchemas(my_functions)
 
 # Return function with given name
-f = FindGPTEnabledByName(my_functions, "my_function1")
+f = tool2schema.FindGPTEnabledByName(my_functions, "my_function1")
 
 # Returns all functions with given tag
-fs = FindGPTEnabledByTag(my_functions, "tag1")
+fs = tool2schema.FindGPTEnabledByTag(my_functions, "tag1")
+
+# Saves function schemas to JSON file
+json_path = # Path to JSON file
+tool2schema.SaveGPTEnabled(my_functions, json_path)
 ```
 
 ## How it Works
