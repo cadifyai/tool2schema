@@ -1,7 +1,7 @@
 import functools
 import inspect
-import re
 import json
+import re
 from enum import Enum
 from inspect import Parameter
 from types import ModuleType
@@ -59,7 +59,9 @@ def FindGPTEnabledByTag(module: ModuleType, tag: str) -> list[Callable]:
     return [x for x in FindGPTEnabled(module) if x.has(tag)]
 
 
-def SaveGPTEnabled(module: ModuleType, path: str, schema_type: SchemaType = SchemaType.API):
+def SaveGPTEnabled(
+    module: ModuleType, path: str, schema_type: SchemaType = SchemaType.API
+):
     """
     Save all function schemas with the GPTEnabled decorator to a file.
 
