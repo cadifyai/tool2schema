@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tool2schema"
-version = "v0.5.2"
+version = "v0.5.4"
 description = "A library to generate function schemas for use in the OpenAI API."
 authors = ["Angus Stewart <siliconlad@protonmail.com>"]
 license = "Apache-2.0"
