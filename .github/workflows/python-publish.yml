@@ -11,12 +11,9 @@ jobs:
       contents: write
     steps:
       - name: Publish PyPi package
-        uses: code-specialist/pypi-poetry-publish@v1
+        uses: cadifyai/poetry-publish
         with:
           ACCESS_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
           PUBLISH_REGISTRY_USERNAME: "__token__"
           PUBLISH_REGISTRY_PASSWORD: ${{ secrets.PUBLISH_REGISTRY_PASSWORD }}
-          BRANCH: "main"
-          POETRY_VERSION: 1.7.1
-          POETRY_CORE_VERSION: 1.8.1
           PACKAGE_DIRECTORY: "./tool2schema/"
