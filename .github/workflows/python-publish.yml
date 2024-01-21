@@ -18,4 +18,5 @@ jobs:
           PUBLISH_REGISTRY_PASSWORD: ${{ secrets.PUBLISH_REGISTRY_PASSWORD }}
           BRANCH: "main"
           POETRY_VERSION: 1.7.1
+          POETRY_CORE_VERSION: 1.8.1
           PACKAGE_DIRECTORY: "./tool2schema"
