@@ -2,6 +2,14 @@ from tool2schema import GPTEnabled
 
 
 @GPTEnabled
+def function_no_params():
+    """
+    This is a test function.
+    """
+    return None
+
+
+@GPTEnabled
 def function(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
     This is a test function.

@@ -123,7 +123,7 @@ class FunctionSchema:
         :param schema_type: Type of schema to return;
         """
         if schema_type == SchemaType.TUNE:
-            return self.schema["function"]
+            return FunctionSchema.schema(self.f, schema_type)["function"]
         return self.schema
 
     def add_enum(self, n: str, enum: list) -> "FunctionSchema":
@@ -138,7 +138,7 @@ class FunctionSchema:
         return self
 
     @staticmethod
-    def schema(f: Callable):
+    def schema(f: Callable, schema_type=SchemaType.API) -> dict:
         """
         Construct a function schema for OpenAI.
 
@@ -146,7 +146,7 @@ class FunctionSchema:
         """
         fschema = {"type": "function", "function": {"name": f.__name__}}
         fschema = FunctionSchema._function_description(f, fschema)
-        fschema = FunctionSchema._param_schema(f, fschema)
+        fschema = FunctionSchema._param_schema(f, fschema, schema_type)
         return fschema
 
     @staticmethod
@@ -167,7 +167,7 @@ class FunctionSchema:
         return fschema
 
     @staticmethod
-    def _param_schema(f: Callable, fschema: dict) -> dict:
+    def _param_schema(f: Callable, fschema: dict, schema_type: SchemaType) -> dict:
         """
         Construct the parameter schema for a function.
 
@@ -178,6 +178,8 @@ class FunctionSchema:
             param_schema["properties"] = params
             if required_params := FunctionSchema._param_required(f):
                 param_schema["required"] = required_params
+            fschema["function"]["parameters"] = param_schema
+        elif schema_type == SchemaType.TUNE:
             fschema["function"]["parameters"] = param_schema
         return fschema
 
