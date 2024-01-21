@@ -138,7 +138,7 @@ class FunctionSchema:
         return self
 
     @staticmethod
-    def schema(f: Callable, schema_type = SchemaType.API) -> dict:
+    def schema(f: Callable, schema_type=SchemaType.API) -> dict:
         """
         Construct a function schema for OpenAI.
 

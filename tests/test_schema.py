@@ -36,7 +36,9 @@ def test_FindGPTEnabledSchemas():
     assert len(FindGPTEnabledSchemas(functions)) == 3
     assert functions.function.schema.to_json() in FindGPTEnabledSchemas(functions)
     assert functions.function_tags.schema.to_json() in FindGPTEnabledSchemas(functions)
-    assert functions.function_no_params.schema.to_json() in FindGPTEnabledSchemas(functions)
+    assert functions.function_no_params.schema.to_json() in FindGPTEnabledSchemas(
+        functions
+    )
 
 
 def test_FindGPTEnabledSchemas_API():
@@ -76,7 +78,10 @@ def test_FindGPTEnabledByName():
     # Check that the function is found
     assert FindGPTEnabledByName(functions, "function") == functions.function
     assert FindGPTEnabledByName(functions, "function_tags") == functions.function_tags
-    assert FindGPTEnabledByName(functions, "function_no_params") == functions.function_no_params
+    assert (
+        FindGPTEnabledByName(functions, "function_no_params")
+        == functions.function_no_params
+    )
     # Check that the function is not found
     assert FindGPTEnabledByName(functions, "function_not_enabled") is None
 
@@ -376,13 +381,11 @@ def test_function_no_params_tune():
     expected_schema = {
         "name": "function_no_params",
         "description": "This is a test function.",
-        "parameters": {
-            "type": "object",
-            "properties": {}
-        }
+        "parameters": {"type": "object", "properties": {}},
     }
     assert function_no_params.schema.to_json(SchemaType.TUNE) == expected_schema
     assert function_no_params.tags == []
+
 
 ##########################################
 #  Example function with no description  #
