@@ -5,7 +5,7 @@ on:
     types: [ published ]
 
 jobs:
-  publish-service-client-package:
+  publish-package:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -16,3 +16,4 @@ jobs:
           ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PUBLISH_REGISTRY_USERNAME: "__token__"
           PUBLISH_REGISTRY_PASSWORD: ${{ secrets.PUBLISH_REGISTRY_PASSWORD }}
+          BRANCH: "main"
