@@ -27,7 +27,7 @@ On all functions that you would like to get JSON schema for, simply add the `GPT
 from tool2schema import GPTEnabled
 
 @GPTEnabled
-def my_function2(a: int, b: str = "Hello"):
+def my_function1(a: int, b: str = "Hello"):
     """
     Example function description.
 
