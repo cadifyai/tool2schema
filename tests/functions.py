@@ -1,4 +1,3 @@
-from __future__ import annotations
 from tool2schema import GPTEnabled
 
 
