@@ -9,7 +9,7 @@ repository="https://github.com/cadifyai/tool2schema"
 keywords=["openai", "llm"]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.8"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.4.4"
