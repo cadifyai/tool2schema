@@ -224,10 +224,15 @@ class FunctionSchema:
         :param pschema: Parameter schema to update;
         """
         if o.annotation != Parameter.empty:
-            if o.annotation.__name__ == "Optional":
-                if (sub_type := FunctionSchema._sub_type(o)) is not None:
-                    pschema["type"] = sub_type
-            elif o.annotation.__name__.lower() == "list":
+            if re.match(r"typing\..*", str(o.annotation)):
+                if re.match(r"typing\.Optional.*", str(o.annotation)):
+                    if (sub_type := FunctionSchema._sub_type(o)) is not None:
+                        pschema["type"] = sub_type
+                elif re.match(r"typing\.List.*", str(o.annotation)):
+                    pschema["type"] = FunctionSchema.TYPE_MAP["list"]
+                    if (sub_type := FunctionSchema._sub_type(o)) is not None:
+                        pschema["items"] = {"type": sub_type}
+            elif o.annotation.__name__ == "list":
                 pschema["type"] = FunctionSchema.TYPE_MAP["list"]
                 if (sub_type := FunctionSchema._sub_type(o)) is not None:
                     pschema["items"] = {"type": sub_type}
@@ -238,18 +243,23 @@ class FunctionSchema:
         return pschema
 
     @staticmethod
-    def _sub_type(o: Parameter) -> Optional[dict]:
+    def _sub_type(o: Parameter) -> str:
         """
         Get the type from the Optional or list annotation.
 
         :param o: Parameter to get the name from;
         """
-        if o.annotation.__name__ == "Optional":
-            if o.annotation.__args__:
-                annotation_name = o.annotation.__args__[0].__name__
-                return FunctionSchema.TYPE_MAP.get(annotation_name, "object")
-        elif o.annotation.__name__.lower() == "list":
-            if inner_type := re.findall(r"[Ll]ist\[(.*?)\]", str(o.annotation)):
+        if re.match(r"typing\..*", str(o.annotation)):
+            if re.match(r"typing\.Optional.*", str(o.annotation)):
+                if "__args__" in dir(o.annotation):
+                    annotation_name = o.annotation.__args__[0].__name__
+                    return FunctionSchema.TYPE_MAP.get(annotation_name, "object")
+            elif re.match(r"typing\.List.*", str(o.annotation)):
+                if "__args__" in dir(o.annotation):
+                    annotation_name = o.annotation.__args__[0].__name__
+                    return FunctionSchema.TYPE_MAP.get(annotation_name, "object")
+        elif o.annotation.__name__ == "list":
+            if inner_type := re.findall(r"list\[(.*?)\]", str(o.annotation)):
                 return FunctionSchema.TYPE_MAP.get(inner_type[0], "object")
         return None
 
