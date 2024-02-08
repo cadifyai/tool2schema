@@ -236,6 +236,12 @@ class FunctionSchema:
                         type(get_args(o.annotation)[0]).__name__, "object"
                     )
                     pschema["enum"] = list(get_args(o.annotation))
+            elif issubclass(o.annotation, Enum):
+                e_values = [e.value for e in o.annotation]
+                pschema["type"] = FunctionSchema.TYPE_MAP.get(
+                    type(e_values[0]).__name__, "object"
+                )
+                pschema["enum"] = e_values
             elif o.annotation.__name__ == "list":
                 pschema["type"] = FunctionSchema.TYPE_MAP["list"]
                 if (sub_type := FunctionSchema._sub_type(o)) is not None:

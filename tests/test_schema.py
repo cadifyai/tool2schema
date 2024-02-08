@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import List, Optional, Literal
 
 from tool2schema import (
@@ -930,3 +931,127 @@ def test_function_typing_literal_string():
     assert function_typing_literal_string.schema.to_json() == expected_schema
     assert function_typing_literal_string.tags == []
 
+
+#################################################
+#  Example functions with enum.Enum annotation  #
+#################################################
+
+
+class IntEnum(Enum):
+    A = 1
+    B = 2
+    C = 3
+
+
+@GPTEnabled
+def function_enum_int(a: IntEnum, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
+    """
+    This is a test function.
+
+    :param a: This is a parameter;
+    :param b: This is another parameter;
+    :param c: This is a boolean parameter;
+    :param d: This is a list parameter;
+    """
+    return a, b, c, d
+
+
+def test_function_enum_int():
+    # Check schema
+    expected_schema = {
+        "type": "function",
+        "function": {
+            "name": "function_enum_int",
+            "description": "This is a test function.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "a": {
+                        "type": "integer",
+                        "description": "This is a parameter",
+                        "enum": [1, 2, 3],
+                    },
+                    "b": {
+                        "type": "string",
+                        "description": "This is another parameter",
+                    },
+                    "c": {
+                        "type": "boolean",
+                        "description": "This is a boolean parameter",
+                        "default": False,
+                    },
+                    "d": {
+                        "type": "array",
+                        "description": "This is a list parameter",
+                        "items": {
+                            "type": "integer",
+                        },
+                        "default": [1, 2, 3],
+                    },
+                },
+                "required": ["a", "b"],
+            },
+        },
+    }
+    assert function_enum_int.schema.to_json() == expected_schema
+    assert function_enum_int.tags == []
+
+
+class StrEnum(Enum):
+    A = "a"
+    B = "b"
+    C = "c"
+
+
+@GPTEnabled
+def function_enum_string(a: StrEnum, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
+    """
+    This is a test function.
+
+    :param a: This is a parameter;
+    :param b: This is another parameter;
+    :param c: This is a boolean parameter;
+    :param d: This is a list parameter;
+    """
+    return a, b, c, d
+
+
+def test_function_enum_string():
+    # Check schema
+    expected_schema = {
+        "type": "function",
+        "function": {
+            "name": "function_enum_string",
+            "description": "This is a test function.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "a": {
+                        "type": "string",
+                        "description": "This is a parameter",
+                        "enum": ["a", "b", "c"],
+                    },
+                    "b": {
+                        "type": "string",
+                        "description": "This is another parameter",
+                    },
+                    "c": {
+                        "type": "boolean",
+                        "description": "This is a boolean parameter",
+                        "default": False,
+                    },
+                    "d": {
+                        "type": "array",
+                        "description": "This is a list parameter",
+                        "items": {
+                            "type": "integer",
+                        },
+                        "default": [1, 2, 3],
+                    },
+                },
+                "required": ["a", "b"],
+            },
+        },
+    }
+    assert function_enum_string.schema.to_json() == expected_schema
+    assert function_enum_string.tags == []
