@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Literal
 
 from tool2schema import (
     FindGPTEnabled,
@@ -288,9 +288,9 @@ def test_function_tags_tune():
     assert function_tags.tags == ["test"]
 
 
-########################################
-#  Example function to test with enum  #
-########################################
+#########################################################
+#  Example function to test with enum (using add_enum)  #
+#########################################################
 
 
 @GPTEnabled
@@ -816,3 +816,117 @@ def test_function_typing_list_no_type():
     }
     assert function_typing_list_no_type.schema.to_json() == expected_schema
     assert function_typing_list_no_type.tags == []
+
+
+######################################################
+#  Example functions with typing.Literal annotation  #
+######################################################
+
+
+@GPTEnabled
+def function_typing_literal_int(a: Literal[1, 2, 3], b: str, c: bool = False, d: list[int] = [1, 2, 3]):
+    """
+    This is a test function.
+
+    :param a: This is a parameter;
+    :param b: This is another parameter;
+    :param c: This is a boolean parameter;
+    :param d: This is a list parameter;
+    """
+    return a, b, c, d
+
+
+def test_function_typing_literal_int():
+    # Check schema
+    expected_schema = {
+        "type": "function",
+        "function": {
+            "name": "function_typing_literal_int",
+            "description": "This is a test function.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "a": {
+                        "type": "integer",
+                        "description": "This is a parameter",
+                        "enum": [1, 2, 3],
+                    },
+                    "b": {
+                        "type": "string",
+                        "description": "This is another parameter",
+                    },
+                    "c": {
+                        "type": "boolean",
+                        "description": "This is a boolean parameter",
+                        "default": False,
+                    },
+                    "d": {
+                        "type": "array",
+                        "description": "This is a list parameter",
+                        "items": {
+                            "type": "integer",
+                        },
+                        "default": [1, 2, 3],
+                    },
+                },
+                "required": ["a", "b"],
+            },
+        },
+    }
+    assert function_typing_literal_int.schema.to_json() == expected_schema
+    assert function_typing_literal_int.tags == []
+
+
+@GPTEnabled
+def function_typing_literal_string(a: Literal["a", "b", "c"], b: str, c: bool = False, d: list[int] = [1, 2, 3]):
+    """
+    This is a test function.
+
+    :param a: This is a parameter;
+    :param b: This is another parameter;
+    :param c: This is a boolean parameter;
+    :param d: This is a list parameter;
+    """
+    return a, b, c, d
+
+
+def test_function_typing_literal_string():
+    # Check schema
+    expected_schema = {
+        "type": "function",
+        "function": {
+            "name": "function_typing_literal_string",
+            "description": "This is a test function.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "a": {
+                        "type": "string",
+                        "description": "This is a parameter",
+                        "enum": ["a", "b", "c"],
+                    },
+                    "b": {
+                        "type": "string",
+                        "description": "This is another parameter",
+                    },
+                    "c": {
+                        "type": "boolean",
+                        "description": "This is a boolean parameter",
+                        "default": False,
+                    },
+                    "d": {
+                        "type": "array",
+                        "description": "This is a list parameter",
+                        "items": {
+                            "type": "integer",
+                        },
+                        "default": [1, 2, 3],
+                    },
+                },
+                "required": ["a", "b"],
+            },
+        },
+    }
+    assert function_typing_literal_string.schema.to_json() == expected_schema
+    assert function_typing_literal_string.tags == []
+

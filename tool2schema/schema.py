@@ -5,7 +5,7 @@ import re
 from enum import Enum
 from inspect import Parameter
 from types import ModuleType
-from typing import Callable, Optional
+from typing import Callable, Optional, get_args
 
 
 class SchemaType(Enum):
@@ -130,7 +130,6 @@ class FunctionSchema:
         """
         Add enum property to a particular function parameter.
 
-        :param schema: The schema to modify;
         :param n: The name of the parameter with the enum values;
         :param enum: The list of values for the enum parameter;
         """
@@ -232,6 +231,11 @@ class FunctionSchema:
                     pschema["type"] = FunctionSchema.TYPE_MAP["list"]
                     if (sub_type := FunctionSchema._sub_type(o)) is not None:
                         pschema["items"] = {"type": sub_type}
+                elif re.match(r"typing\.Literal.*", str(o.annotation)):
+                    pschema["type"] = FunctionSchema.TYPE_MAP.get(
+                        type(get_args(o.annotation)[0]).__name__, "object"
+                    )
+                    pschema["enum"] = list(get_args(o.annotation))
             elif o.annotation.__name__ == "list":
                 pschema["type"] = FunctionSchema.TYPE_MAP["list"]
                 if (sub_type := FunctionSchema._sub_type(o)) is not None:
