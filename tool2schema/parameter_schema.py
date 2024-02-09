@@ -147,10 +147,12 @@ class OptionalParameterSchema(GenericParameterSchema):
 
     @staticmethod
     def matches(parameter: Parameter) -> bool:
+        args = typing.get_args(parameter.annotation)
         return (
             parameter.annotation != parameter.empty
             and typing.get_origin(parameter.annotation) is typing.Union
-            and type(None) in typing.get_args(parameter.annotation)
+            and len(args) == 2
+            and type(None) in args
         )
 
     def _add_type(self, schema: dict):
