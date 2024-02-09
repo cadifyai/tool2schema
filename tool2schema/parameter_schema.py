@@ -35,25 +35,25 @@ class ParameterSchema:
         """
         raise NotImplementedError()
 
-    def add_type(self, schema: dict):
+    def _add_type(self, schema: dict):
         """
         Add the type of this parameter to the given schema.
         """
         raise NotImplementedError()
 
-    def add_items(self, schema: dict):
+    def _add_items(self, schema: dict):
         """
         Add the items property to the given schema.
         """
         pass
 
-    def add_enum(self, schema: dict):
+    def _add_enum(self, schema: dict):
         """
         Add the enum property to the given schema.
         """
         pass
 
-    def add_description(self, schema: dict):
+    def _add_description(self, schema: dict):
         """
         Add the description of this parameter, extracted from the function docstring, to the given schema.
         """
@@ -69,7 +69,7 @@ class ParameterSchema:
                 schema["description"] = desc
                 return
 
-    def add_default(self, schema: dict):
+    def _add_default(self, schema: dict):
         """
         Add the default value, when present, to the given schema.
         """
@@ -83,11 +83,11 @@ class ParameterSchema:
         Return the json schema for this parameter.
         """
         json = {}
-        self.add_description(json)
-        self.add_default(json)
-        self.add_items(json)
-        self.add_type(json)
-        self.add_enum(json)
+        self._add_description(json)
+        self._add_default(json)
+        self._add_items(json)
+        self._add_type(json)
+        self._add_enum(json)
         return json
 
 
@@ -103,7 +103,7 @@ class ValueTypeSchema(ParameterSchema):
             and parameter.annotation.__name__ in TYPE_MAP
         )
 
-    def add_type(self, schema: dict):
+    def _add_type(self, schema: dict):
         schema["type"] = TYPE_MAP[self.parameter.annotation.__name__]
 
 
@@ -119,10 +119,10 @@ class ListParameterSchema(ParameterSchema):
             and parameter.annotation.__name__ == "list"
         )
 
-    def add_type(self, schema: dict):
+    def _add_type(self, schema: dict):
         schema["type"] = TYPE_MAP["list"]
 
-    def add_items(self, schema: dict):
+    def _add_items(self, schema: dict):
         if inner_type := re.findall(r"list\[(.*?)\]", str(self.parameter.annotation)):
             sub_type = TYPE_MAP.get(inner_type[0], "object")
             schema["items"] = {"type": sub_type}
@@ -133,7 +133,7 @@ class TypingParameterSchema(ParameterSchema):
     Base class for typing module parameter schemas (e.g., typing.List).
     """
 
-    def get_sub_type(self):
+    def _get_sub_type(self):
         if "__args__" in dir(self.parameter.annotation):
             annotation_name = self.parameter.annotation.__args__[0].__name__
             return TYPE_MAP.get(annotation_name, "object")
@@ -153,11 +153,11 @@ class TypingListParameterSchema(TypingParameterSchema):
             and re.match(r"typing\.List.*", str(parameter.annotation)) is not None
         )
 
-    def add_type(self, schema: dict):
+    def _add_type(self, schema: dict):
         schema["type"] = TYPE_MAP["list"]
 
-    def add_items(self, schema: dict):
-        if sub_type := super().get_sub_type():
+    def _add_items(self, schema: dict):
+        if sub_type := super()._get_sub_type():
             schema["items"] = {"type": sub_type}
 
 
@@ -173,8 +173,8 @@ class TypingOptionalParameterSchema(TypingParameterSchema):
             and re.match(r"typing\.Optional.*", str(parameter.annotation)) is not None
         )
 
-    def add_type(self, schema: dict):
-        if sub_type := super().get_sub_type():
+    def _add_type(self, schema: dict):
+        if sub_type := super()._get_sub_type():
             schema["type"] = sub_type
 
 
