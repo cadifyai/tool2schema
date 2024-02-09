@@ -1,4 +1,5 @@
 import re
+import typing
 from inspect import Parameter
 
 TYPE_MAP = {
@@ -107,50 +108,28 @@ class ValueTypeSchema(ParameterSchema):
         schema["type"] = TYPE_MAP[self.parameter.annotation.__name__]
 
 
-class ListParameterSchema(ParameterSchema):
+class GenericParameterSchema(ParameterSchema):
+    """
+    Base class for generic parameter types supporting subscription.
+    """
+
+    def _get_sub_type(self):
+        if args := typing.get_args(self.parameter.annotation):
+            return TYPE_MAP.get(args[0].__name__, "object")
+
+        return None
+
+
+class ListParameterSchema(GenericParameterSchema):
     """
     Parameter schema for list (array) types.
     """
 
     @staticmethod
     def matches(parameter: Parameter) -> bool:
-        return (
-            parameter.annotation != Parameter.empty
-            and parameter.annotation.__name__ == "list"
-        )
-
-    def _add_type(self, schema: dict):
-        schema["type"] = TYPE_MAP["list"]
-
-    def _add_items(self, schema: dict):
-        if inner_type := re.findall(r"list\[(.*?)\]", str(self.parameter.annotation)):
-            sub_type = TYPE_MAP.get(inner_type[0], "object")
-            schema["items"] = {"type": sub_type}
-
-
-class TypingParameterSchema(ParameterSchema):
-    """
-    Base class for typing module parameter schemas (e.g., typing.List).
-    """
-
-    def _get_sub_type(self):
-        if "__args__" in dir(self.parameter.annotation):
-            annotation_name = self.parameter.annotation.__args__[0].__name__
-            return TYPE_MAP.get(annotation_name, "object")
-
-        return None
-
-
-class TypingListParameterSchema(TypingParameterSchema):
-    """
-    Parameter schema for typing.List types.
-    """
-
-    @staticmethod
-    def matches(parameter: Parameter) -> bool:
-        return (
-            parameter.annotation != Parameter.empty
-            and re.match(r"typing\.List.*", str(parameter.annotation)) is not None
+        return parameter.annotation != Parameter.empty and (
+            parameter.annotation is list
+            or typing.get_origin(parameter.annotation) is list
         )
 
     def _add_type(self, schema: dict):
@@ -161,7 +140,7 @@ class TypingListParameterSchema(TypingParameterSchema):
             schema["items"] = {"type": sub_type}
 
 
-class TypingOptionalParameterSchema(TypingParameterSchema):
+class OptionalParameterSchema(GenericParameterSchema):
     """
     Parameter schema for typing.Optional types.
     """
@@ -170,7 +149,8 @@ class TypingOptionalParameterSchema(TypingParameterSchema):
     def matches(parameter: Parameter) -> bool:
         return (
             parameter.annotation != parameter.empty
-            and re.match(r"typing\.Optional.*", str(parameter.annotation)) is not None
+            and typing.get_origin(parameter.annotation) is typing.Union
+            and type(None) in typing.get_args(parameter.annotation)
         )
 
     def _add_type(self, schema: dict):
@@ -179,8 +159,7 @@ class TypingOptionalParameterSchema(TypingParameterSchema):
 
 
 PARAMETER_SCHEMAS = [
-    TypingListParameterSchema,
-    TypingOptionalParameterSchema,
+    OptionalParameterSchema,
     ListParameterSchema,
     ValueTypeSchema,
 ]
