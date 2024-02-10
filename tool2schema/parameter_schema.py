@@ -160,6 +160,9 @@ class OptionalParameterSchema(GenericParameterSchema):
             schema["type"] = sub_type
 
 
+# Order matters: specific classes should appear before more generic ones;
+# for example, ListParameterSchema must precede ValueTypeSchema,
+# as they both match list types
 PARAMETER_SCHEMAS = [
     OptionalParameterSchema,
     ListParameterSchema,
