@@ -5,7 +5,7 @@ import re
 from enum import Enum
 from inspect import Parameter
 from types import ModuleType
-from typing import Callable, Optional, get_args
+from typing import Callable, Optional
 
 from tool2schema.parameter_schema import PARAMETER_SCHEMAS
 

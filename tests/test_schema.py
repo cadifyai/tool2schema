@@ -825,7 +825,9 @@ def test_function_typing_list_no_type():
 
 
 @GPTEnabled
-def function_typing_literal_int(a: Literal[1, 2, 3], b: str, c: bool = False, d: list[int] = [1, 2, 3]):
+def function_typing_literal_int(
+    a: Literal[1, 2, 3], b: str, c: bool = False, d: list[int] = [1, 2, 3]
+):
     """
     This is a test function.
 
@@ -879,7 +881,9 @@ def test_function_typing_literal_int():
 
 
 @GPTEnabled
-def function_typing_literal_string(a: Literal["a", "b", "c"], b: str, c: bool = False, d: list[int] = [1, 2, 3]):
+def function_typing_literal_string(
+    a: Literal["a", "b", "c"], b: str, c: bool = False, d: list[int] = [1, 2, 3]
+):
     """
     This is a test function.
 

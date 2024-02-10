@@ -1,6 +1,7 @@
 import re
 import typing
-from inspect import Parameter
+from enum import Enum
+from inspect import Parameter, isclass
 
 TYPE_MAP = {
     "int": "integer",
@@ -160,11 +161,60 @@ class OptionalParameterSchema(GenericParameterSchema):
             schema["type"] = sub_type
 
 
+class EnumParameterSchema(ParameterSchema):
+    """
+    Parameter schema for Enum types.
+    """
+
+    def __init__(self, parameter: Parameter, docstring: str = None):
+        super().__init__(parameter, docstring)
+        self.enum_values = [e.value for e in parameter.annotation]
+
+    @staticmethod
+    def matches(parameter: Parameter) -> bool:
+        return (
+            parameter.annotation != parameter.empty
+            and isclass(parameter.annotation)
+            and issubclass(parameter.annotation, Enum)
+        )
+
+    def _add_type(self, schema: dict):
+        schema["type"] = TYPE_MAP.get(type(self.enum_values[0]).__name__, "object")
+
+    def _add_enum(self, schema: dict):
+        schema["enum"] = self.enum_values
+
+
+class LiteralParameterSchema(ParameterSchema):
+    """
+    Parameter schema for typing.Literal types.
+    """
+
+    def __init__(self, parameter: Parameter, docstring: str = None):
+        super().__init__(parameter, docstring)
+        self.enum_values = list(typing.get_args(parameter.annotation))
+
+    @staticmethod
+    def matches(parameter: Parameter) -> bool:
+        return (
+            parameter.annotation != parameter.empty
+            and typing.get_origin(parameter.annotation) is typing.Literal
+        )
+
+    def _add_type(self, schema: dict):
+        schema["type"] = TYPE_MAP.get(type(self.enum_values[0]).__name__, "object")
+
+    def _add_enum(self, schema: dict):
+        schema["enum"] = self.enum_values
+
+
 # Order matters: specific classes should appear before more generic ones;
 # for example, ListParameterSchema must precede ValueTypeSchema,
 # as they both match list types
 PARAMETER_SCHEMAS = [
     OptionalParameterSchema,
+    LiteralParameterSchema,
+    EnumParameterSchema,
     ListParameterSchema,
     ValueTypeSchema,
 ]
