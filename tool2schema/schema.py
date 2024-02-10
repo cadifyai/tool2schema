@@ -7,6 +7,8 @@ from inspect import Parameter
 from types import ModuleType
 from typing import Callable, Optional, get_args
 
+from tool2schema.parameter_schema import PARAMETER_SCHEMAS
+
 
 class SchemaType(Enum):
     """Enum for schema types."""
@@ -105,14 +107,6 @@ def GPTEnabled(func=None, **kwargs):
 class FunctionSchema:
     """Automatically create a function schema."""
 
-    TYPE_MAP = {
-        "int": "integer",
-        "float": "number",
-        "str": "string",
-        "bool": "boolean",
-        "list": "array",
-    }
-
     def __init__(self, f: Callable):
         self.f = f
         self.schema = FunctionSchema.schema(f)
@@ -193,10 +187,12 @@ class FunctionSchema:
         for n, o in inspect.signature(f).parameters.items():
             if n == "kwargs":
                 continue  # Skip kwargs
-            pschema[n] = {}
-            pschema[n] = FunctionSchema._param_type(o, pschema[n])
-            pschema[n] = FunctionSchema._param_description(f, n, pschema[n])
-            pschema[n] = FunctionSchema._param_default(o, pschema[n])
+
+            for Param in PARAMETER_SCHEMAS:
+                if Param.matches(o):
+                    pschema[n] = Param(o, f.__doc__).to_json()
+                    break
+
         return pschema
 
     @staticmethod
@@ -213,92 +209,3 @@ class FunctionSchema:
             if o.default == Parameter.empty:
                 req_params.append(n)
         return req_params
-
-    @staticmethod
-    def _param_type(o: Parameter, pschema: dict) -> dict:
-        """
-        Get the appropriate parameter schema.
-
-        :param o: Parameter to get the name from;
-        :param pschema: Parameter schema to update;
-        """
-        if o.annotation != Parameter.empty:
-            if re.match(r"typing\..*", str(o.annotation)):
-                if re.match(r"typing\.Optional.*", str(o.annotation)):
-                    if (sub_type := FunctionSchema._sub_type(o)) is not None:
-                        pschema["type"] = sub_type
-                elif re.match(r"typing\.List.*", str(o.annotation)):
-                    pschema["type"] = FunctionSchema.TYPE_MAP["list"]
-                    if (sub_type := FunctionSchema._sub_type(o)) is not None:
-                        pschema["items"] = {"type": sub_type}
-                elif re.match(r"typing\.Literal.*", str(o.annotation)):
-                    pschema["type"] = FunctionSchema.TYPE_MAP.get(
-                        type(get_args(o.annotation)[0]).__name__, "object"
-                    )
-                    pschema["enum"] = list(get_args(o.annotation))
-            elif issubclass(o.annotation, Enum):
-                e_values = [e.value for e in o.annotation]
-                pschema["type"] = FunctionSchema.TYPE_MAP.get(
-                    type(e_values[0]).__name__, "object"
-                )
-                pschema["enum"] = e_values
-            elif o.annotation.__name__ == "list":
-                pschema["type"] = FunctionSchema.TYPE_MAP["list"]
-                if (sub_type := FunctionSchema._sub_type(o)) is not None:
-                    pschema["items"] = {"type": sub_type}
-            elif o.annotation.__name__ in FunctionSchema.TYPE_MAP:
-                pschema["type"] = FunctionSchema.TYPE_MAP.get(
-                    o.annotation.__name__, "object"
-                )
-        return pschema
-
-    @staticmethod
-    def _sub_type(o: Parameter) -> str:
-        """
-        Get the type from the Optional or list annotation.
-
-        :param o: Parameter to get the name from;
-        """
-        if re.match(r"typing\..*", str(o.annotation)):
-            if re.match(r"typing\.Optional.*", str(o.annotation)):
-                if "__args__" in dir(o.annotation):
-                    annotation_name = o.annotation.__args__[0].__name__
-                    return FunctionSchema.TYPE_MAP.get(annotation_name, "object")
-            elif re.match(r"typing\.List.*", str(o.annotation)):
-                if "__args__" in dir(o.annotation):
-                    annotation_name = o.annotation.__args__[0].__name__
-                    return FunctionSchema.TYPE_MAP.get(annotation_name, "object")
-        elif o.annotation.__name__ == "list":
-            if inner_type := re.findall(r"list\[(.*?)\]", str(o.annotation)):
-                return FunctionSchema.TYPE_MAP.get(inner_type[0], "object")
-        return None
-
-    @staticmethod
-    def _param_description(f: Callable, n: str, pschema: dict) -> dict:
-        """
-        Extract the parameter description.
-
-        :param f: Function the parameter is located in;
-        :param n: Name of the parameter;
-        """
-        if f.__doc__ is not None:
-            docstring = " ".join(
-                [x.strip() for x in f.__doc__.replace("\n", " ").split()]
-            )
-            params = re.findall(r":param (.*?): (.*?);", docstring)
-            for name, desc in params:
-                if name == n:
-                    pschema["description"] = desc
-                    return pschema
-        return pschema
-
-    @staticmethod
-    def _param_default(o: Parameter, pschema: dict) -> dict:
-        """
-        Extract the parameter default value.
-
-        :param o: Parameter to extract default value from;
-        """
-        if o.default != Parameter.empty:
-            pschema["default"] = o.default
-        return pschema
