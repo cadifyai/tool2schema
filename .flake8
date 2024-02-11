@@ -9,7 +9,7 @@ exclude =
     __pycache__,
     # Contains logs which are not needed to be checked
     log,
-    # Resource files that don't need checkin
+    # Resource files that don't need checking
     resources,
     # Icons that don't need checking
     icons
