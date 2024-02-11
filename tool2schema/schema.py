@@ -21,7 +21,7 @@ def FindGPTEnabled(module: ModuleType) -> list[Callable]:
     """
     Find all functions with the GPTEnabled decorator.
 
-    :param module: Module to search for GPTEnabled functions;
+    :param module: Module to search for GPTEnabled functions
     """
     return [x for x in module.__dict__.values() if hasattr(x, "gpt_enabled")]
 
@@ -32,8 +32,8 @@ def FindGPTEnabledSchemas(
     """
     Find all function schemas with the GPTEnabled decorator.
 
-    :param module: Module to search for GPTEnabled functions;
-    :param schema_type: Type of schema to return;
+    :param module: Module to search for GPTEnabled functions
+    :param schema_type: Type of schema to return
     """
     return [x.schema.to_json(schema_type) for x in FindGPTEnabled(module)]
 
@@ -42,8 +42,8 @@ def FindGPTEnabledByName(module: ModuleType, name: str) -> Optional[Callable]:
     """
     Find a function with the GPTEnabled decorator by name.
 
-    :param module: Module to search for GPTEnabled functions;
-    :param name: Name of the function to find;
+    :param module: Module to search for GPTEnabled functions
+    :param name: Name of the function to find
     """
     for func in FindGPTEnabled(module):
         if func.__name__ == name:
@@ -55,8 +55,8 @@ def FindGPTEnabledByTag(module: ModuleType, tag: str) -> list[Callable]:
     """
     Find all functions with the GPTEnabled decorator by tag.
 
-    :param module: Module to search for GPTEnabled functions;
-    :param tag: Tag to search for;
+    :param module: Module to search for GPTEnabled functions
+    :param tag: Tag to search for
     """
     return [x for x in FindGPTEnabled(module) if x.has(tag)]
 
@@ -67,9 +67,9 @@ def SaveGPTEnabled(
     """
     Save all function schemas with the GPTEnabled decorator to a file.
 
-    :param module: Module to search for GPTEnabled functions;
-    :param path: Path to save the schemas to;
-    :param schema_type: Type of schema to return;
+    :param module: Module to search for GPTEnabled functions
+    :param path: Path to save the schemas to
+    :param schema_type: Type of schema to return
     """
     schemas = FindGPTEnabledSchemas(module, schema_type)
     json.dump(schemas, open(path, "w"))
@@ -131,7 +131,7 @@ class FunctionSchema:
     def to_json(self, schema_type: SchemaType = SchemaType.API) -> dict:
         """
         Convert schema to JSON.
-        :param schema_type: Type of schema to return;
+        :param schema_type: Type of schema to return
         """
         if schema_type == SchemaType.TUNE:
             return FunctionSchema(self.f, schema_type).to_json()["function"]
@@ -141,8 +141,8 @@ class FunctionSchema:
         """
         Add enum property to a particular function parameter.
 
-        :param n: The name of the parameter with the enum values;
-        :param enum: The list of values for the enum parameter;
+        :param n: The name of the parameter with the enum values
+        :param enum: The list of values for the enum parameter
         """
         self.schema["function"]["parameters"]["properties"][n]["enum"] = enum
         return self
@@ -166,7 +166,7 @@ class FunctionSchema:
         """
         Extract the function description, if present.
 
-        :return: The function description, or None if not present;
+        :return: The function description, or None if not present
         """
         if docstring := self.f.__doc__:  # Check if docstring exists
             docstring = " ".join(
