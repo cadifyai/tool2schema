@@ -180,7 +180,7 @@ class EnumParameterSchema(ParameterSchema):
 
     def __init__(self, parameter: Parameter, docstring: str = None):
         super().__init__(parameter, docstring)
-        self.enum_values = [e.value for e in parameter.annotation]
+        self.enum_names = [e.name for e in parameter.annotation]
 
     @staticmethod
     def matches(parameter: Parameter) -> bool:
@@ -191,22 +191,22 @@ class EnumParameterSchema(ParameterSchema):
         )
 
     def _add_type(self, schema: dict):
-        schema["type"] = TYPE_MAP.get(type(self.enum_values[0]).__name__, "object")
+        schema["type"] = TYPE_MAP["str"]
 
     def _add_enum(self, schema: dict):
-        schema["enum"] = self.enum_values
+        schema["enum"] = self.enum_names
 
     def parse_value(self, value):
         """
-        Convert an enum value to an instance of the enum type.
+        Convert an enum name to an instance of the enum type.
 
-        :param value: The value to be converted.
+        :param value: The enum name to be converted
         """
-        if value in self.enum_values:
-            # convert to an enum instance
-            return self.parameter.annotation(value)
+        if value in self.enum_names:
+            # Convert to an enum instance
+            return self.parameter.annotation[value]
 
-        # the user is invoking the method directly
+        # The user is invoking the method directly
         return value
 
 

@@ -569,14 +569,16 @@ def test_function_typing_literal_string():
 #################################################
 
 
-class IntEnum(Enum):
+class CustomEnum(Enum):
     A = 1
     B = 2
     C = 3
 
 
 @GPTEnabled
-def function_enum_int(a: IntEnum, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
+def function_custom_enum(
+    a: CustomEnum, b: str, c: bool = False, d: list[int] = [1, 2, 3]
+):
     """
     This is a test function.
 
@@ -588,59 +590,21 @@ def function_enum_int(a: IntEnum, b: str, c: bool = False, d: list[int] = [1, 2,
     return a, b, c, d
 
 
-def test_function_enum_int():
-    rf = ReferenceSchema(function_enum_int)
-    rf.get_param("a")["enum"] = [1, 2, 3]
-    assert function_enum_int.schema.to_json() == rf.schema
-    assert function_enum_int.tags == []
-
-    # Try invoking the function to verify that 1 is converted to StrEnum.A
-    a, _, _, _ = function_enum_int(a=IntEnum.A.value, b="", c=False, d=[])
-    assert a == IntEnum.A
-
-    # Verify it is possible to invoke the function with the Enum instance
-    a, _, _, _ = function_enum_int(a=IntEnum.A, b="", c=False, d=[])
-    assert a == IntEnum.A
-
-    # Verify it is possible to invoke the function with positional args
-    a, _, _, _ = function_enum_int(IntEnum.A, "", False, [])
-    assert a == IntEnum.A
-
-
-class StrEnum(Enum):
-    A = "a"
-    B = "b"
-    C = "c"
-
-
-@GPTEnabled
-def function_enum_string(a: StrEnum, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
-    """
-    This is a test function.
-
-    :param a: This is a parameter;
-    :param b: This is another parameter;
-    :param c: This is a boolean parameter;
-    :param d: This is a list parameter;
-    """
-    return a, b, c, d
-
-
-def test_function_enum_string():
-    rf = ReferenceSchema(function_enum_string)
-    rf.get_param("a")["enum"] = ["a", "b", "c"]
+def test_function_custom_enum():
+    rf = ReferenceSchema(function_custom_enum)
     rf.get_param("a")["type"] = "string"
-    assert function_enum_string.schema.to_json() == rf.schema
-    assert function_enum_string.tags == []
+    rf.get_param("a")["enum"] = [x.name for x in CustomEnum]
+    assert function_custom_enum.schema.to_json() == rf.schema
+    assert function_custom_enum.tags == []
 
-    # Try invoking the function to verify that "a" is converted to StrEnum.A
-    a, _, _, _ = function_enum_string(a=StrEnum.A.value, b="", c=False, d=[])
-    assert a == StrEnum.A
+    # Try invoking the function to verify that "A" is converted to CustomEnum.A
+    a, _, _, _ = function_custom_enum(a=CustomEnum.A.name, b="", c=False, d=[])
+    assert a == CustomEnum.A
 
     # Verify it is possible to invoke the function with the Enum instance
-    a, _, _, _ = function_enum_string(a=StrEnum.A, b="", c=False, d=[])
-    assert a == StrEnum.A
+    a, _, _, _ = function_custom_enum(a=CustomEnum.A, b="", c=False, d=[])
+    assert a == CustomEnum.A
 
     # Verify it is possible to invoke the function with positional args
-    a, _, _, _ = function_enum_string(StrEnum.A, "", False, [])
-    assert a == StrEnum.A
+    a, _, _, _ = function_custom_enum(CustomEnum.A, "", False, [])
+    assert a == CustomEnum.A
