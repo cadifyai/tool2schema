@@ -37,9 +37,7 @@ def test_FindGPTEnabledSchemas():
     assert len(FindGPTEnabledSchemas(functions)) == 3
     assert functions.function.schema.to_json() in FindGPTEnabledSchemas(functions)
     assert functions.function_tags.schema.to_json() in FindGPTEnabledSchemas(functions)
-    assert functions.function_no_params.schema.to_json() in FindGPTEnabledSchemas(
-        functions
-    )
+    assert functions.function_no_params.schema.to_json() in FindGPTEnabledSchemas(functions)
 
 
 def test_FindGPTEnabledSchemas_API():
@@ -48,12 +46,12 @@ def test_FindGPTEnabledSchemas_API():
     assert functions.function.schema.to_json(SchemaType.API) in FindGPTEnabledSchemas(
         functions, schema_type=SchemaType.API
     )
-    assert functions.function_tags.schema.to_json(
-        SchemaType.API
-    ) in FindGPTEnabledSchemas(functions, schema_type=SchemaType.API)
-    assert functions.function_no_params.schema.to_json(
-        SchemaType.API
-    ) in FindGPTEnabledSchemas(functions, schema_type=SchemaType.API)
+    assert functions.function_tags.schema.to_json(SchemaType.API) in FindGPTEnabledSchemas(
+        functions, schema_type=SchemaType.API
+    )
+    assert functions.function_no_params.schema.to_json(SchemaType.API) in FindGPTEnabledSchemas(
+        functions, schema_type=SchemaType.API
+    )
 
 
 def test_FindGPTEnabledSchemas_TUNE():
@@ -62,12 +60,12 @@ def test_FindGPTEnabledSchemas_TUNE():
     assert functions.function.schema.to_json(SchemaType.TUNE) in FindGPTEnabledSchemas(
         functions, schema_type=SchemaType.TUNE
     )
-    assert functions.function_tags.schema.to_json(
-        SchemaType.TUNE
-    ) in FindGPTEnabledSchemas(functions, schema_type=SchemaType.TUNE)
-    assert functions.function_no_params.schema.to_json(
-        SchemaType.TUNE
-    ) in FindGPTEnabledSchemas(functions, schema_type=SchemaType.TUNE)
+    assert functions.function_tags.schema.to_json(SchemaType.TUNE) in FindGPTEnabledSchemas(
+        functions, schema_type=SchemaType.TUNE
+    )
+    assert functions.function_no_params.schema.to_json(SchemaType.TUNE) in FindGPTEnabledSchemas(
+        functions, schema_type=SchemaType.TUNE
+    )
 
 
 ###############################
@@ -79,10 +77,7 @@ def test_FindGPTEnabledByName():
     # Check that the function is found
     assert FindGPTEnabledByName(functions, "function") == functions.function
     assert FindGPTEnabledByName(functions, "function_tags") == functions.function_tags
-    assert (
-        FindGPTEnabledByName(functions, "function_no_params")
-        == functions.function_no_params
-    )
+    assert FindGPTEnabledByName(functions, "function_no_params") == functions.function_no_params
     # Check that the function is not found
     assert FindGPTEnabledByName(functions, "function_not_enabled") is None
 
@@ -335,9 +330,7 @@ def test_function_no_description():
 
 
 @GPTEnabled
-def function_no_param_docstrings(
-    a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]
-):
+def function_no_param_docstrings(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
     This is a test function.
     """
@@ -360,9 +353,7 @@ def test_function_no_param_docstrings():
 
 
 @GPTEnabled
-def function_no_param_descriptions(
-    a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]
-):
+def function_no_param_descriptions(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
     This is a test function.
 

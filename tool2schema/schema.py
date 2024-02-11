@@ -61,9 +61,7 @@ def FindGPTEnabledByTag(module: ModuleType, tag: str) -> list[Callable]:
     return [x for x in FindGPTEnabled(module) if x.has(tag)]
 
 
-def SaveGPTEnabled(
-    module: ModuleType, path: str, schema_type: SchemaType = SchemaType.API
-):
+def SaveGPTEnabled(module: ModuleType, path: str, schema_type: SchemaType = SchemaType.API):
     """
     Save all function schemas with the GPTEnabled decorator to a file.
 
@@ -151,9 +149,7 @@ class FunctionSchema:
         :param f: Function from which to extract description
         """
         if docstring := f.__doc__:  # Check if docstring exists
-            docstring = " ".join(
-                [x.strip() for x in docstring.replace("\n", " ").split()]
-            )
+            docstring = " ".join([x.strip() for x in docstring.replace("\n", " ").split()])
             if desc := re.findall(r"(.*?):param", docstring):
                 fschema["function"]["description"] = desc[0].strip()
                 return fschema

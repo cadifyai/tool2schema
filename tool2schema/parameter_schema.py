@@ -56,17 +56,14 @@ class ParameterSchema:
 
     def _add_description(self, schema: dict):
         """
-        Add the description of this parameter, extracted from the function docstring, to the given schema.
+        Add the description of this parameter, extracted from the function docstring, to the given
+        schema.
         """
         if self.docstring is None:
             return
 
-        docstring = " ".join(
-            [x.strip() for x in self.docstring.replace("\n", " ").split()]
-        )
-        params = re.findall(
-            r":param ([^:]*): (.*?)(?=:param|:type|:return|:rtype|$)", docstring
-        )
+        docstring = " ".join([x.strip() for x in self.docstring.replace("\n", " ").split()])
+        params = re.findall(r":param ([^:]*): (.*?)(?=:param|:type|:return|:rtype|$)", docstring)
         for name, desc in params:
             if name == self.parameter.name and desc:
                 schema["description"] = desc.strip()
@@ -101,10 +98,7 @@ class ValueTypeSchema(ParameterSchema):
 
     @staticmethod
     def matches(parameter: Parameter) -> bool:
-        return (
-            parameter.annotation != Parameter.empty
-            and parameter.annotation.__name__ in TYPE_MAP
-        )
+        return parameter.annotation != Parameter.empty and parameter.annotation.__name__ in TYPE_MAP
 
     def _add_type(self, schema: dict):
         schema["type"] = TYPE_MAP[self.parameter.annotation.__name__]
@@ -130,8 +124,7 @@ class ListParameterSchema(GenericParameterSchema):
     @staticmethod
     def matches(parameter: Parameter) -> bool:
         return parameter.annotation != Parameter.empty and (
-            parameter.annotation is list
-            or typing.get_origin(parameter.annotation) is list
+            parameter.annotation is list or typing.get_origin(parameter.annotation) is list
         )
 
     def _add_type(self, schema: dict):
