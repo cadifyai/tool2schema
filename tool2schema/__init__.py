@@ -10,3 +10,16 @@ from .schema import (
     SaveGPTEnabled,
     SchemaType,
 )
+
+from .config import Config
+
+# Default global configuration
+CONFIG = Config()
+
+
+def _reset_config():
+    """
+    Reset the configuration to the default settings.
+    """
+    global CONFIG
+    CONFIG = Config()

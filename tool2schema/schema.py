@@ -7,6 +7,8 @@ from inspect import Parameter
 from types import ModuleType
 from typing import Callable, Optional
 
+import tool2schema
+from tool2schema.config import Config
 from tool2schema.parameter_schema import PARAMETER_SCHEMAS, ParameterSchema
 
 
@@ -78,8 +80,8 @@ def SaveGPTEnabled(
 class _GPTEnabled:
     def __init__(self, func, **kwargs) -> None:
         self.func = func
-        self.schema = FunctionSchema(func)
-        self.tags = kwargs.get("tags", [])
+        self.config = Config(tool2schema.CONFIG, **kwargs)
+        self.schema = FunctionSchema(func, self.config)
         functools.update_wrapper(self, func)
 
     def __call__(self, *args, **kwargs):
@@ -92,6 +94,10 @@ class _GPTEnabled:
                 )
 
         return self.func(*args, **kwargs)
+
+    @property
+    def tags(self):
+        return self.config.tags
 
     def gpt_enabled(self) -> bool:
         return True
@@ -115,14 +121,18 @@ def GPTEnabled(func=None, **kwargs):
 class FunctionSchema:
     """Automatically create a function schema for OpenAI."""
 
-    def __init__(self, f: Callable, schema_type: SchemaType = SchemaType.API):
+    def __init__(
+        self, f: Callable, config: Config, schema_type: SchemaType = SchemaType.API
+    ):
         """
         Initialize FunctionSchema for the given function.
 
-        :param f: The function to create a schema for;
-        :param schema_type: Type of schema;
+        :param f: The function to create a schema for
+        :param config: Configuration settings
+        :param schema_type: Type of schema
         """
         self.f = f
+        self.config = config
         self.schema_type: SchemaType = schema_type
         self.schema: dict = {}
         self.parameter_schemas: dict[str, ParameterSchema] = {}
@@ -134,7 +144,9 @@ class FunctionSchema:
         :param schema_type: Type of schema to return
         """
         if schema_type == SchemaType.TUNE:
-            return FunctionSchema(self.f, schema_type).to_json()["function"]
+            return FunctionSchema(self.f, self.config, schema_type).to_json()[
+                "function"
+            ]
         return self.schema
 
     def add_enum(self, n: str, enum: list) -> "FunctionSchema":
@@ -186,8 +198,8 @@ class FunctionSchema:
         json_schema = dict()
 
         for n, o in inspect.signature(self.f).parameters.items():
-            if n == "kwargs":
-                continue  # Skip kwargs
+            if n in self.config.ignored_parameters:
+                continue  # Skip ignored parameter
 
             for Param in PARAMETER_SCHEMAS:
                 if Param.matches(o):
@@ -208,11 +220,9 @@ class FunctionSchema:
         Populate the list of required parameters.
         """
         req_params = []
-        for n, o in inspect.signature(self.f).parameters.items():
-            if n == "kwargs":
-                continue  # Skip kwargs
-            if o.default == Parameter.empty:
-                req_params.append(n)
+        for schema in self.parameter_schemas.values():
+            if schema.parameter.default == Parameter.empty:
+                req_params.append(schema.parameter.name)
 
         if req_params:
             self.schema["function"]["parameters"]["required"] = req_params

@@ -2,6 +2,7 @@ import copy
 from enum import Enum
 from typing import List, Optional, Literal, Callable
 
+import tool2schema
 from tool2schema import (
     FindGPTEnabled,
     FindGPTEnabledByName,
@@ -169,8 +170,12 @@ class ReferenceSchema:
 
         :param param: Name of the parameter to remove
         """
-        self.schema["function"]["parameters"]["properties"].pop(param)
-        self.schema["function"]["parameters"]["required"].pop(param, None)
+
+        parameters = self.schema["function"]["parameters"]
+        parameters["properties"].pop(param)
+
+        if param in (required := parameters["required"]):
+            required.remove(param)
 
     def get_param(self, param: str) -> dict:
         """
@@ -676,3 +681,64 @@ def test_function_custom_enum():
     # Verify it is possible to invoke the function with positional args
     a, _, _, _ = function_custom_enum(CustomEnum.A, "", False, [])
     assert a == CustomEnum.A
+
+
+#############################
+#  Test ignored_parameters  #
+#############################
+
+
+@GPTEnabled(ignored_parameters=["a", "d"])
+def function_ignored_parameters(
+    a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]
+):
+    """
+    This is a test function.
+
+    :param a: This is a parameter
+    :param b: This is another parameter
+    :param c: This is a boolean parameter
+    :param d: This is a list parameter
+    """
+    return a, b, c, d
+
+
+def test_function_ignored_parameters():
+    rf = ReferenceSchema(function_ignored_parameters)
+    rf.remove_param("a")
+    rf.remove_param("d")
+    assert function_ignored_parameters.schema.to_json() == rf.schema
+    assert function_ignored_parameters.schema.to_json(SchemaType.TUNE) == rf.tune_schema
+    assert function_ignored_parameters.tags == []
+
+
+###############################
+#  Test global configuration  #
+###############################
+
+
+def test_global_configuration_ignored_args():
+    # Change the global configuration
+    tool2schema.CONFIG.ignored_parameters = ["b", "c"]
+
+    # We have to re-define the function in this scope
+    # to use the updated configuration
+    @GPTEnabled
+    def _function(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
+        """
+        This is a test function.
+
+        :param a: This is a parameter
+        :param b: This is another parameter
+        :param c: This is a boolean parameter
+        :param d: This is a list parameter
+        """
+        return a, b, c, d
+
+    tool2schema._reset_config()  # Reset the configuration to the default
+    rf = ReferenceSchema(_function)
+    rf.remove_param("b")
+    rf.remove_param("c")
+    assert _function.schema.to_json() == rf.schema
+    assert _function.schema.to_json(SchemaType.TUNE) == rf.tune_schema
+    assert _function.tags == []
