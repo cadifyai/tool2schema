@@ -92,6 +92,18 @@ class ParameterSchema:
         self._add_enum(json)
         return json
 
+    def parse_value(self, value):
+        """
+        Convert the given value from the JSON representation to an instance
+        that can be passed to the original method as a parameter. Overriding
+        methods should check whether the value needs to be converted, and return
+        it as is if no conversion is necessary.
+
+        :param value: The value to be converted.
+        :return: An instance of the type required by the original method.
+        """
+        return value
+
 
 class ValueTypeSchema(ParameterSchema):
     """
@@ -183,6 +195,19 @@ class EnumParameterSchema(ParameterSchema):
 
     def _add_enum(self, schema: dict):
         schema["enum"] = self.enum_values
+
+    def parse_value(self, value):
+        """
+        Convert an enum value to an instance of the enum type.
+
+        :param value: The value to be converted.
+        """
+        if value in self.enum_values:
+            # convert to an enum instance
+            return self.parameter.annotation(value)
+
+        # the user is invoking the method directly
+        return value
 
 
 class LiteralParameterSchema(ParameterSchema):

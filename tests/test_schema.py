@@ -594,6 +594,18 @@ def test_function_enum_int():
     assert function_enum_int.schema.to_json() == rf.schema
     assert function_enum_int.tags == []
 
+    # Try invoking the function to verify that 1 is converted to StrEnum.A
+    a, _, _, _ = function_enum_int(a=IntEnum.A.value, b="", c=False, d=[])
+    assert a == IntEnum.A
+
+    # Verify it is possible to invoke the function with the Enum instance
+    a, _, _, _ = function_enum_int(a=IntEnum.A, b="", c=False, d=[])
+    assert a == IntEnum.A
+
+    # Verify it is possible to invoke the function with positional args
+    a, _, _, _ = function_enum_int(IntEnum.A, "", False, [])
+    assert a == IntEnum.A
+
 
 class StrEnum(Enum):
     A = "a"
@@ -620,3 +632,15 @@ def test_function_enum_string():
     rf.get_param("a")["type"] = "string"
     assert function_enum_string.schema.to_json() == rf.schema
     assert function_enum_string.tags == []
+
+    # Try invoking the function to verify that "a" is converted to StrEnum.A
+    a, _, _, _ = function_enum_string(a=StrEnum.A.value, b="", c=False, d=[])
+    assert a == StrEnum.A
+
+    # Verify it is possible to invoke the function with the Enum instance
+    a, _, _, _ = function_enum_string(a=StrEnum.A, b="", c=False, d=[])
+    assert a == StrEnum.A
+
+    # Verify it is possible to invoke the function with positional args
+    a, _, _, _ = function_enum_string(StrEnum.A, "", False, [])
+    assert a == StrEnum.A
