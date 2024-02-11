@@ -534,42 +534,9 @@ def function_typing_literal_int(
 
 def test_function_typing_literal_int():
     # Check schema
-    expected_schema = {
-        "type": "function",
-        "function": {
-            "name": "function_typing_literal_int",
-            "description": "This is a test function.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "a": {
-                        "type": "integer",
-                        "description": "This is a parameter",
-                        "enum": [1, 2, 3],
-                    },
-                    "b": {
-                        "type": "string",
-                        "description": "This is another parameter",
-                    },
-                    "c": {
-                        "type": "boolean",
-                        "description": "This is a boolean parameter",
-                        "default": False,
-                    },
-                    "d": {
-                        "type": "array",
-                        "description": "This is a list parameter",
-                        "items": {
-                            "type": "integer",
-                        },
-                        "default": [1, 2, 3],
-                    },
-                },
-                "required": ["a", "b"],
-            },
-        },
-    }
-    assert function_typing_literal_int.schema.to_json() == expected_schema
+    rf = ReferenceSchema(function_typing_literal_int)
+    rf.get_param("a")["enum"] = [1, 2, 3]
+    assert function_typing_literal_int.schema.to_json() == rf.schema
     assert function_typing_literal_int.tags == []
 
 
@@ -590,42 +557,10 @@ def function_typing_literal_string(
 
 def test_function_typing_literal_string():
     # Check schema
-    expected_schema = {
-        "type": "function",
-        "function": {
-            "name": "function_typing_literal_string",
-            "description": "This is a test function.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "a": {
-                        "type": "string",
-                        "description": "This is a parameter",
-                        "enum": ["a", "b", "c"],
-                    },
-                    "b": {
-                        "type": "string",
-                        "description": "This is another parameter",
-                    },
-                    "c": {
-                        "type": "boolean",
-                        "description": "This is a boolean parameter",
-                        "default": False,
-                    },
-                    "d": {
-                        "type": "array",
-                        "description": "This is a list parameter",
-                        "items": {
-                            "type": "integer",
-                        },
-                        "default": [1, 2, 3],
-                    },
-                },
-                "required": ["a", "b"],
-            },
-        },
-    }
-    assert function_typing_literal_string.schema.to_json() == expected_schema
+    rf = ReferenceSchema(function_typing_literal_string)
+    rf.get_param("a")["enum"] = ["a", "b", "c"]
+    rf.get_param("a")["type"] = "string"
+    assert function_typing_literal_string.schema.to_json() == rf.schema
     assert function_typing_literal_string.tags == []
 
 
@@ -654,43 +589,9 @@ def function_enum_int(a: IntEnum, b: str, c: bool = False, d: list[int] = [1, 2,
 
 
 def test_function_enum_int():
-    # Check schema
-    expected_schema = {
-        "type": "function",
-        "function": {
-            "name": "function_enum_int",
-            "description": "This is a test function.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "a": {
-                        "type": "integer",
-                        "description": "This is a parameter",
-                        "enum": [1, 2, 3],
-                    },
-                    "b": {
-                        "type": "string",
-                        "description": "This is another parameter",
-                    },
-                    "c": {
-                        "type": "boolean",
-                        "description": "This is a boolean parameter",
-                        "default": False,
-                    },
-                    "d": {
-                        "type": "array",
-                        "description": "This is a list parameter",
-                        "items": {
-                            "type": "integer",
-                        },
-                        "default": [1, 2, 3],
-                    },
-                },
-                "required": ["a", "b"],
-            },
-        },
-    }
-    assert function_enum_int.schema.to_json() == expected_schema
+    rf = ReferenceSchema(function_enum_int)
+    rf.get_param("a")["enum"] = [1, 2, 3]
+    assert function_enum_int.schema.to_json() == rf.schema
     assert function_enum_int.tags == []
 
 
@@ -714,41 +615,8 @@ def function_enum_string(a: StrEnum, b: str, c: bool = False, d: list[int] = [1,
 
 
 def test_function_enum_string():
-    # Check schema
-    expected_schema = {
-        "type": "function",
-        "function": {
-            "name": "function_enum_string",
-            "description": "This is a test function.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "a": {
-                        "type": "string",
-                        "description": "This is a parameter",
-                        "enum": ["a", "b", "c"],
-                    },
-                    "b": {
-                        "type": "string",
-                        "description": "This is another parameter",
-                    },
-                    "c": {
-                        "type": "boolean",
-                        "description": "This is a boolean parameter",
-                        "default": False,
-                    },
-                    "d": {
-                        "type": "array",
-                        "description": "This is a list parameter",
-                        "items": {
-                            "type": "integer",
-                        },
-                        "default": [1, 2, 3],
-                    },
-                },
-                "required": ["a", "b"],
-            },
-        },
-    }
-    assert function_enum_string.schema.to_json() == expected_schema
+    rf = ReferenceSchema(function_enum_string)
+    rf.get_param("a")["enum"] = ["a", "b", "c"]
+    rf.get_param("a")["type"] = "string"
+    assert function_enum_string.schema.to_json() == rf.schema
     assert function_enum_string.tags == []
