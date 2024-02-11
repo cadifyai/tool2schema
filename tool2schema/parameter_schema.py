@@ -21,8 +21,8 @@ class ParameterSchema:
         """
         Create a new parameter schema.
 
-        :param parameter: The parameter to create a schema for;
-        :param docstring: The docstring for the function containing the parameter;
+        :param parameter: The parameter to create a schema for
+        :param docstring: The docstring for the function containing the parameter
         """
         self.parameter = parameter
         self.docstring = docstring
@@ -64,10 +64,12 @@ class ParameterSchema:
         docstring = " ".join(
             [x.strip() for x in self.docstring.replace("\n", " ").split()]
         )
-        params = re.findall(r":param (.*?): (.*?);", docstring)
+        params = re.findall(
+            r":param ([^:]*): (.*?)(?=:param|:type|:return|:rtype|$)", docstring
+        )
         for name, desc in params:
-            if name == self.parameter.name:
-                schema["description"] = desc
+            if name == self.parameter.name and desc:
+                schema["description"] = desc.strip()
                 return
 
     def _add_default(self, schema: dict):

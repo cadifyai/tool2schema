@@ -31,8 +31,8 @@ def my_function1(a: int, b: str = "Hello"):
     """
     Example function description.
 
-    :param a: First parameter;
-    :param b: Second parameter;
+    :param a: First parameter
+    :param b: Second parameter
     """
     # Function code here...
 
@@ -41,8 +41,8 @@ def my_function2(a: int, b: str = "Hello"):
     """
     Example function description.
 
-    :param a: First parameter;
-    :param b: Second parameter;
+    :param a: First parameter
+    :param b: Second parameter
     """
     # Function code here...
 ```
@@ -85,12 +85,10 @@ def my_function(a: int, b: str = "Hello"):
     """
     Example function description.
 
-    :param a: First parameter;
-    :param b: Second parameter;
+    :param a: First parameter
+    :param b: Second parameter
     """
 ```
-
-**Note** the `;` at the end of each parameter description. This is used to indicate the end of the parameter description.
 
 To get the schema for this function, simply use the `GPTEnabled` decorator. The decorator will return a class with some additional attributes but can still be called as a function.
 
@@ -124,8 +122,8 @@ def my_function(a: int, b: str,):
     """
     Example function description.
 
-    :param a: First parameter;
-    :param b: Second parameter;
+    :param a: First parameter
+    :param b: Second parameter
     """
     # Function code here...
 my_function.schema.add_enum("b", ["yes", "no"])
@@ -143,8 +141,8 @@ def my_function(a: int, b: str = "Hello"):
     """
     Example function description.
 
-    :param a: First parameter;
-    :param b: Second parameter;
+    :param a: First parameter
+    :param b: Second parameter
     """
     # Function code here...
 ```

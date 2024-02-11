@@ -200,10 +200,10 @@ def function(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
     This is a test function.
 
-    :param a: This is a parameter;
-    :param b: This is another parameter;
-    :param c: This is a boolean parameter;
-    :param d: This is a list parameter;
+    :param a: This is a parameter
+    :param b: This is another parameter
+    :param c: This is a boolean parameter
+    :param d: This is a list parameter
     """
     return a, b, c, d
 
@@ -230,10 +230,10 @@ def function_tags(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
     This is a test function.
 
-    :param a: This is a parameter;
-    :param b: This is another parameter;
-    :param c: This is a boolean parameter;
-    :param d: This is a list parameter;
+    :param a: This is a parameter
+    :param b: This is another parameter
+    :param c: This is a boolean parameter
+    :param d: This is a list parameter
     """
     return a, b, c, d
 
@@ -260,10 +260,10 @@ def function_enum(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
     This is a test function.
 
-    :param a: This is a parameter;
-    :param b: This is another parameter;
-    :param c: This is a boolean parameter;
-    :param d: This is a list parameter;
+    :param a: This is a parameter
+    :param b: This is another parameter
+    :param c: This is a boolean parameter
+    :param d: This is a list parameter
     """
     return a, b, c, d
 
@@ -314,10 +314,10 @@ def test_function_no_params_tune():
 @GPTEnabled
 def function_no_description(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
-    :param a: This is a parameter;
-    :param b: This is another parameter;
-    :param c: This is a boolean parameter;
-    :param d: This is a list parameter;
+    :param a: This is a parameter
+    :param b: This is another parameter
+    :param c: This is a boolean parameter
+    :param d: This is a list parameter
     """
     return a, b, c, d
 
@@ -415,10 +415,10 @@ def function_list_no_type(a: int, b: str, c: bool = False, d: list = [1, 2, 3]):
     """
     This is a test function.
 
-    :param a: This is a parameter;
-    :param b: This is another parameter;
-    :param c: This is a boolean parameter;
-    :param d: This is a list parameter;
+    :param a: This is a parameter
+    :param b: This is another parameter
+    :param c: This is a boolean parameter
+    :param d: This is a list parameter
     """
     return a, b, c, d
 
@@ -440,10 +440,10 @@ def function_optional(a: int, b: str, c: bool = False, d: Optional[int] = None):
     """
     This is a test function.
 
-    :param a: This is a parameter;
-    :param b: This is another parameter;
-    :param c: This is a boolean parameter;
-    :param d: This is an optional parameter;
+    :param a: This is a parameter
+    :param b: This is another parameter
+    :param c: This is a boolean parameter
+    :param d: This is an optional parameter
     """
     return a, b, c, d
 
@@ -472,10 +472,10 @@ def function_typing_list(a: int, b: str, c: bool = False, d: List[int] = [1, 2, 
     """
     This is a test function.
 
-    :param a: This is a parameter;
-    :param b: This is another parameter;
-    :param c: This is a boolean parameter;
-    :param d: This is a list parameter;
+    :param a: This is a parameter
+    :param b: This is another parameter
+    :param c: This is a boolean parameter
+    :param d: This is a list parameter
     """
     return a, b, c, d
 
@@ -496,10 +496,10 @@ def function_typing_list_no_type(a: int, b: str, c: bool = False, d: List = [1, 
     """
     This is a test function.
 
-    :param a: This is a parameter;
-    :param b: This is another parameter;
-    :param c: This is a boolean parameter;
-    :param d: This is a list parameter;
+    :param a: This is a parameter
+    :param b: This is another parameter
+    :param c: This is a boolean parameter
+    :param d: This is a list parameter
     """
     return a, b, c, d
 
@@ -509,3 +509,71 @@ def test_function_typing_list_no_type():
     rf.get_param("d").pop("items")
     assert function_typing_list_no_type.schema.to_json() == rf.schema
     assert function_typing_list_no_type.tags == []
+
+
+##########################################
+#  Example function with long docstring  #
+##########################################
+
+
+# Docstring adapted from https://sphinx-rtd-tutorial.readthedocs.io/en/latest/docstrings.html
+@GPTEnabled
+def function_docstring(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
+    """Returns a list containing :class:`bluepy.btle.Characteristic`
+    objects for the peripheral. If no arguments are given, will return all
+    characteristics. If startHnd and/or endHnd are given, the list is
+    restricted to characteristics whose handles are within the given range.
+
+    :param a: Received Signal Strength Indication for the last received
+        broadcast from the device. This is an integer value measured in dB,
+        where 0 dB is the maximum (theoretical) signal strength, and more
+        negative numbers indicate a weaker signal, defaults to 0
+    :type a: int, optional
+    :param b: A function handle of the form
+        ``callback(client, characteristic, data)``, where ``client`` is a
+        handle to the :class:`simpleble.SimpleBleClient` that invoked the
+        callback, ``characteristic`` is the notified
+        :class:`bluepy.blte.Characteristic` object and data is a
+        `bytearray` containing the updated value. Defaults to None
+    :type b: int, optional
+    :param c: End index, defaults to 0xFFFF
+    :type c: int, optional
+    :param d: A list of UUID strings, defaults to None
+    :type d: list, optional
+    :return: List of returned :class:`bluepy.btle.Characteristic` objects
+    :rtype: list
+    """
+    return a, b, c, d
+
+
+def test_function_docstring():
+    rf = ReferenceSchema(function_docstring)
+
+    rf.schema["function"]["description"] = (
+        "Returns a list containing :class:`bluepy.btle.Characteristic` "
+        "objects for the peripheral. If no arguments are given, will return all "
+        "characteristics. If startHnd and/or endHnd are given, the list is "
+        "restricted to characteristics whose handles are within the given range."
+    )
+
+    rf.get_param("a")["description"] = (
+        "Received Signal Strength Indication for the last received "
+        "broadcast from the device. This is an integer value measured in dB, "
+        "where 0 dB is the maximum (theoretical) signal strength, and more "
+        "negative numbers indicate a weaker signal, defaults to 0"
+    )
+
+    rf.get_param("b")["description"] = (
+        "A function handle of the form "
+        "``callback(client, characteristic, data)``, where ``client`` is a "
+        "handle to the :class:`simpleble.SimpleBleClient` that invoked the "
+        "callback, ``characteristic`` is the notified "
+        ":class:`bluepy.blte.Characteristic` object and data is a "
+        "`bytearray` containing the updated value. Defaults to None"
+    )
+
+    rf.get_param("c")["description"] = "End index, defaults to 0xFFFF"
+    rf.get_param("d")["description"] = "A list of UUID strings, defaults to None"
+
+    assert function_docstring.schema.to_json() == rf.schema
+    assert function_docstring.tags == []

@@ -21,7 +21,7 @@ def FindGPTEnabled(module: ModuleType) -> list[Callable]:
     """
     Find all functions with the GPTEnabled decorator.
 
-    :param module: Module to search for GPTEnabled functions;
+    :param module: Module to search for GPTEnabled functions
     """
     return [x for x in module.__dict__.values() if hasattr(x, "gpt_enabled")]
 
@@ -32,8 +32,8 @@ def FindGPTEnabledSchemas(
     """
     Find all function schemas with the GPTEnabled decorator.
 
-    :param module: Module to search for GPTEnabled functions;
-    :param schema_type: Type of schema to return;
+    :param module: Module to search for GPTEnabled functions
+    :param schema_type: Type of schema to return
     """
     return [x.schema.to_json(schema_type) for x in FindGPTEnabled(module)]
 
@@ -42,8 +42,8 @@ def FindGPTEnabledByName(module: ModuleType, name: str) -> Optional[Callable]:
     """
     Find a function with the GPTEnabled decorator by name.
 
-    :param module: Module to search for GPTEnabled functions;
-    :param name: Name of the function to find;
+    :param module: Module to search for GPTEnabled functions
+    :param name: Name of the function to find
     """
     for func in FindGPTEnabled(module):
         if func.__name__ == name:
@@ -55,8 +55,8 @@ def FindGPTEnabledByTag(module: ModuleType, tag: str) -> list[Callable]:
     """
     Find all functions with the GPTEnabled decorator by tag.
 
-    :param module: Module to search for GPTEnabled functions;
-    :param tag: Tag to search for;
+    :param module: Module to search for GPTEnabled functions
+    :param tag: Tag to search for
     """
     return [x for x in FindGPTEnabled(module) if x.has(tag)]
 
@@ -67,9 +67,9 @@ def SaveGPTEnabled(
     """
     Save all function schemas with the GPTEnabled decorator to a file.
 
-    :param module: Module to search for GPTEnabled functions;
-    :param path: Path to save the schemas to;
-    :param schema_type: Type of schema to return;
+    :param module: Module to search for GPTEnabled functions
+    :param path: Path to save the schemas to
+    :param schema_type: Type of schema to return
     """
     schemas = FindGPTEnabledSchemas(module, schema_type)
     json.dump(schemas, open(path, "w"))
@@ -114,7 +114,7 @@ class FunctionSchema:
     def to_json(self, schema_type: SchemaType = SchemaType.API) -> dict:
         """
         Convert schema to JSON.
-        :param schema_type: Type of schema to return;
+        :param schema_type: Type of schema to return
         """
         if schema_type == SchemaType.TUNE:
             return FunctionSchema.schema(self.f, schema_type)["function"]
@@ -124,9 +124,9 @@ class FunctionSchema:
         """
         Add enum property to a particular function parameter.
 
-        :param schema: The schema to modify;
-        :param n: The name of the parameter with the enum values;
-        :param enum: The list of values for the enum parameter;
+        :param schema: The schema to modify
+        :param n: The name of the parameter with the enum values
+        :param enum: The list of values for the enum parameter
         """
         self.schema["function"]["parameters"]["properties"][n]["enum"] = enum
         return self
@@ -136,7 +136,7 @@ class FunctionSchema:
         """
         Construct a function schema for OpenAI.
 
-        :param f: Function for which to construct the schema;
+        :param f: Function for which to construct the schema
         """
         fschema = {"type": "function", "function": {"name": f.__name__}}
         fschema = FunctionSchema._function_description(f, fschema)
@@ -148,7 +148,7 @@ class FunctionSchema:
         """
         Extract the function description.
 
-        :param f: Function from which to extract description;
+        :param f: Function from which to extract description
         """
         if docstring := f.__doc__:  # Check if docstring exists
             docstring = " ".join(
@@ -165,7 +165,7 @@ class FunctionSchema:
         """
         Construct the parameter schema for a function.
 
-        :param f: Function to extra parameter schema from;
+        :param f: Function to extra parameter schema from
         """
         param_schema = {"type": "object", "properties": {}}
         if params := FunctionSchema._param_properties(f):
@@ -182,7 +182,7 @@ class FunctionSchema:
         """
         Construct the parameter properties for a function.
 
-        :param f: Function to extra parameter properties from;
+        :param f: Function to extra parameter properties from
         """
         pschema = dict()
         for n, o in inspect.signature(f).parameters.items():
@@ -201,7 +201,7 @@ class FunctionSchema:
         """
         Get the list of required parameters for a function.
 
-        :param f: Function to extract required parameters from;
+        :param f: Function to extract required parameters from
         """
         req_params = []
         for n, o in inspect.signature(f).parameters.items():
