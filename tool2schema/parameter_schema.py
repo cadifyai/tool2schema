@@ -129,7 +129,7 @@ class GenericParameterSchema(ParameterSchema):
         return None
 
 
-class ListParameterSchema(GenericParameterSchema):
+class ListTypeParameterSchema(GenericParameterSchema):
     """
     Parameter schema for list (array) types.
     """
@@ -148,7 +148,7 @@ class ListParameterSchema(GenericParameterSchema):
             schema["items"] = {"type": sub_type}
 
 
-class OptionalParameterSchema(GenericParameterSchema):
+class OptionalTypeParameterSchema(GenericParameterSchema):
     """
     Parameter schema for typing.Optional types.
     """
@@ -170,12 +170,28 @@ class OptionalParameterSchema(GenericParameterSchema):
 
 class EnumParameterSchema(ParameterSchema):
     """
-    Parameter schema for Enum types.
+    Parameter schema for enumeration types.
+    """
+
+    def __init__(self, values: list, parameter: Parameter, docstring: str = None):
+        super().__init__(parameter, docstring)
+        self.enum_values = values
+
+    def _add_type(self, schema: dict):
+        schema["type"] = TYPE_MAP.get(type(self.enum_values[0]).__name__, "object")
+
+    def _add_enum(self, schema: dict):
+        schema["enum"] = self.enum_values
+
+
+class EnumTypeParameterSchema(EnumParameterSchema):
+    """
+    Parameter schema for enum.Enum types.
     """
 
     def __init__(self, parameter: Parameter, docstring: str = None):
-        super().__init__(parameter, docstring)
-        self.enum_names = [e.name for e in parameter.annotation]
+        values = [e.name for e in parameter.annotation]
+        super().__init__(values, parameter, docstring)
 
     @staticmethod
     def matches(parameter: Parameter) -> bool:
@@ -185,19 +201,13 @@ class EnumParameterSchema(ParameterSchema):
             and issubclass(parameter.annotation, Enum)
         )
 
-    def _add_type(self, schema: dict):
-        schema["type"] = TYPE_MAP["str"]
-
-    def _add_enum(self, schema: dict):
-        schema["enum"] = self.enum_names
-
     def parse_value(self, value):
         """
         Convert an enum name to an instance of the enum type.
 
         :param value: The enum name to be converted
         """
-        if value in self.enum_names:
+        if value in self.enum_values:
             # Convert to an enum instance
             return self.parameter.annotation[value]
 
@@ -205,14 +215,14 @@ class EnumParameterSchema(ParameterSchema):
         return value
 
 
-class LiteralParameterSchema(ParameterSchema):
+class LiteralTypeParameterSchema(EnumParameterSchema):
     """
     Parameter schema for typing.Literal types.
     """
 
     def __init__(self, parameter: Parameter, docstring: str = None):
-        super().__init__(parameter, docstring)
-        self.enum_values = list(typing.get_args(parameter.annotation))
+        values = list(typing.get_args(parameter.annotation))
+        super().__init__(values, parameter, docstring)
 
     @staticmethod
     def matches(parameter: Parameter) -> bool:
@@ -221,20 +231,14 @@ class LiteralParameterSchema(ParameterSchema):
             and typing.get_origin(parameter.annotation) is typing.Literal
         )
 
-    def _add_type(self, schema: dict):
-        schema["type"] = TYPE_MAP.get(type(self.enum_values[0]).__name__, "object")
-
-    def _add_enum(self, schema: dict):
-        schema["enum"] = self.enum_values
-
 
 # Order matters: specific classes should appear before more generic ones;
 # for example, ListParameterSchema must precede ValueTypeSchema,
 # as they both match list types
 PARAMETER_SCHEMAS = [
-    OptionalParameterSchema,
-    LiteralParameterSchema,
-    EnumParameterSchema,
-    ListParameterSchema,
+    OptionalTypeParameterSchema,
+    LiteralTypeParameterSchema,
+    EnumTypeParameterSchema,
+    ListTypeParameterSchema,
     ValueTypeSchema,
 ]

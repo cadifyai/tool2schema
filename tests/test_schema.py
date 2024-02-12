@@ -271,6 +271,7 @@ def test_function_enum():
     rf = ReferenceSchema(function_enum)
     rf.get_param("a")["enum"] = [1, 2, 3]
     assert function_enum.schema.to_json() == rf.schema
+    assert function_enum.schema.to_json(SchemaType.TUNE) == rf.tune_schema
     assert function_enum.tags == []
 
 
