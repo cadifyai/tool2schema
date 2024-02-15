@@ -2,6 +2,7 @@ import re
 import typing
 from enum import Enum
 from inspect import Parameter, isclass
+from typing import Union
 
 TYPE_MAP = {
     "int": "integer",
@@ -37,58 +38,69 @@ class ParameterSchema:
         """
         raise NotImplementedError()
 
-    def _add_type(self, schema: dict):
+    def _get_type(self) -> Union[str, Parameter.empty]:
         """
-        Add the type of this parameter to the given schema.
+        Get the type of this parameter, to be added to the JSON schema.
+        Return `Parameter.empty` to omit the type from the schema.
         """
-        raise NotImplementedError()
+        return Parameter.empty
 
-    def _add_items(self, schema: dict):
+    def _get_items(self) -> Union[str, Parameter.empty]:
         """
-        Add the items property to the given schema.
+        Get the items property to be added to the JSON schema.
+        Return `Parameter.empty` to omit the items from the schema.
         """
-        pass
+        return Parameter.empty
 
-    def _add_enum(self, schema: dict):
+    def _get_enum(self) -> Union[list[str], Parameter.empty]:
         """
-        Add the enum property to the given schema.
+        Get the enum property to be added to the JSON schema.
+        Return `Parameter.empty` to omit the enum from the schema.
         """
-        pass
+        return Parameter.empty
 
-    def _add_description(self, schema: dict):
+    def _get_description(self) -> Union[str, Parameter.empty]:
         """
-        Add the description of this parameter, extracted from the function docstring, to the given
-        schema.
+        Get the description of this parameter, extracted from the function docstring,
+        to be added to the JSON schema. Return `Parameter.empty` to omit the description
+        from the schema.
         """
         if self.docstring is None:
-            return
+            return Parameter.empty
 
         docstring = " ".join([x.strip() for x in self.docstring.replace("\n", " ").split()])
         params = re.findall(r":param ([^:]*): (.*?)(?=:param|:type|:return|:rtype|$)", docstring)
         for name, desc in params:
             if name == self.parameter.name and desc:
-                schema["description"] = desc.strip()
-                return
+                return desc.strip()
 
-    def _add_default(self, schema: dict):
-        """
-        Add the default value, when present, to the given schema.
-        """
-        if self.parameter.default == Parameter.empty:
-            return
+        return Parameter.empty
 
-        schema["default"] = self.parameter.default
+    def _get_default(self) -> any:
+        """
+        Get the default value for this parameter, when present, to be added to the JSON schema.
+        Return `Parameter.empty` to omit the default value from the schema.
+        """
+        return self.parameter.default
 
     def to_json(self) -> dict:
         """
         Return the json schema for this parameter.
         """
-        json = {}
-        self._add_description(json)
-        self._add_default(json)
-        self._add_items(json)
-        self._add_type(json)
-        self._add_enum(json)
+        fields = {
+            "description": self._get_description,
+            "default": self._get_default,
+            "items": self._get_items,
+            "type": self._get_type,
+            "enum": self._get_enum,
+        }
+
+        json = dict()
+
+        for field in fields:
+            if (value := fields[field]()) != Parameter.empty:
+                json[field] = value
+
         return json
 
     def parse_value(self, value):
@@ -113,8 +125,8 @@ class ValueTypeSchema(ParameterSchema):
     def matches(parameter: Parameter) -> bool:
         return parameter.annotation != Parameter.empty and parameter.annotation.__name__ in TYPE_MAP
 
-    def _add_type(self, schema: dict):
-        schema["type"] = TYPE_MAP[self.parameter.annotation.__name__]
+    def _get_type(self) -> Union[str, Parameter.empty]:
+        return TYPE_MAP[self.parameter.annotation.__name__]
 
 
 class GenericParameterSchema(ParameterSchema):
@@ -122,11 +134,11 @@ class GenericParameterSchema(ParameterSchema):
     Base class for generic parameter types supporting subscription.
     """
 
-    def _get_sub_type(self):
+    def _get_sub_type(self) -> Union[str, Parameter.empty]:
         if args := typing.get_args(self.parameter.annotation):
             return TYPE_MAP.get(args[0].__name__, "object")
 
-        return None
+        return Parameter.empty
 
 
 class ListTypeParameterSchema(GenericParameterSchema):
@@ -140,12 +152,14 @@ class ListTypeParameterSchema(GenericParameterSchema):
             parameter.annotation is list or typing.get_origin(parameter.annotation) is list
         )
 
-    def _add_type(self, schema: dict):
-        schema["type"] = TYPE_MAP["list"]
+    def _get_type(self) -> Union[str, Parameter.empty]:
+        return TYPE_MAP["list"]
 
-    def _add_items(self, schema: dict):
-        if sub_type := super()._get_sub_type():
-            schema["items"] = {"type": sub_type}
+    def _get_items(self) -> Union[str, Parameter.empty]:
+        if (sub_type := super()._get_sub_type()) != Parameter.empty:
+            return {"type": sub_type}
+
+        return Parameter.empty
 
 
 class OptionalTypeParameterSchema(GenericParameterSchema):
@@ -158,14 +172,13 @@ class OptionalTypeParameterSchema(GenericParameterSchema):
         args = typing.get_args(parameter.annotation)
         return (
             parameter.annotation != parameter.empty
-            and typing.get_origin(parameter.annotation) is typing.Union
+            and typing.get_origin(parameter.annotation) is Union
             and len(args) == 2
             and type(None) in args
         )
 
-    def _add_type(self, schema: dict):
-        if sub_type := super()._get_sub_type():
-            schema["type"] = sub_type
+    def _get_type(self) -> Union[str, Parameter.empty]:
+        return super()._get_sub_type()
 
 
 class EnumParameterSchema(ParameterSchema):
@@ -177,11 +190,11 @@ class EnumParameterSchema(ParameterSchema):
         super().__init__(parameter, docstring)
         self.enum_values = values
 
-    def _add_type(self, schema: dict):
-        schema["type"] = TYPE_MAP.get(type(self.enum_values[0]).__name__, "object")
+    def _get_type(self) -> Union[str, Parameter.empty]:
+        return TYPE_MAP.get(type(self.enum_values[0]).__name__, "object")
 
-    def _add_enum(self, schema: dict):
-        schema["enum"] = self.enum_values
+    def _get_enum(self) -> Union[list[str], Parameter.empty]:
+        return self.enum_values
 
 
 class EnumTypeParameterSchema(EnumParameterSchema):
