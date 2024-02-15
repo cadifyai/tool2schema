@@ -655,7 +655,12 @@ def test_function_custom_enum():
     assert function_custom_enum.schema.to_json() == rf.schema
     assert function_custom_enum.tags == []
 
-    # Try invoking the function to verify that "A" is converted to CustomEnum.A
+    # Try invoking the function to verify that "A" is converted to CustomEnum.A,
+    # passing the value as a positional argument
+    a, _, _, _ = function_custom_enum(CustomEnum.A.name, b="", c=False, d=[])
+    assert a == CustomEnum.A
+
+    # Same as above but passing the value as a keyword argument
     a, _, _, _ = function_custom_enum(a=CustomEnum.A.name, b="", c=False, d=[])
     assert a == CustomEnum.A
 

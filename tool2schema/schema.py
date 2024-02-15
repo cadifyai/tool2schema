@@ -82,6 +82,14 @@ class _GPTEnabled:
 
     def __call__(self, *args, **kwargs):
 
+        args = list(args)  # Tuple is immutable, thus convert to list
+
+        for i, arg in enumerate(args):
+            for p in self.schema.parameter_schemas.values():
+                if p.index == i:
+                    # Convert the JSON value to the type expected by the method
+                    args[i] = p.parse_value(arg)
+
         for key in kwargs:
             if key in self.schema.parameter_schemas:
                 # Convert the JSON value to the type expected by the method
@@ -138,7 +146,7 @@ class FunctionSchema:
         :param enum: The list of values for the enum parameter
         """
         p = self.parameter_schemas[n]
-        self.parameter_schemas[n] = EnumParameterSchema(enum, p.parameter, p.docstring)
+        self.parameter_schemas[n] = EnumParameterSchema(enum, p.parameter, p.index, p.docstring)
         return self
 
     def _get_schema(self) -> dict:
@@ -200,13 +208,13 @@ class FunctionSchema:
         """
         parameters = dict()
 
-        for n, o in inspect.signature(self.f).parameters.items():
+        for i, (n, o) in enumerate(inspect.signature(self.f).parameters.items()):
             if n == "kwargs":
                 continue  # Skip kwargs
 
             for Param in PARAMETER_SCHEMAS:
                 if Param.matches(o):
-                    parameters[n] = Param(o, self.f.__doc__)
+                    parameters[n] = Param(o, i, self.f.__doc__)
                     break
 
         return parameters

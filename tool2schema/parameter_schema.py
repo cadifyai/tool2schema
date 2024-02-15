@@ -19,15 +19,17 @@ class ParameterSchema:
     inspect.Parameter and a function documentation string.
     """
 
-    def __init__(self, parameter: Parameter, docstring: str = None):
+    def __init__(self, parameter: Parameter, index: int, docstring: str = None):
         """
         Create a new parameter schema.
 
         :param parameter: The parameter to create a schema for
+        :param index: The index of the parameter in the function signature
         :param docstring: The docstring for the function containing the parameter
         """
-        self.parameter = parameter
-        self.docstring = docstring
+        self.parameter: Parameter = parameter
+        self.index: int = index
+        self.docstring: str = docstring
 
     @staticmethod
     def matches(parameter: Parameter) -> bool:
@@ -186,8 +188,8 @@ class EnumParameterSchema(ParameterSchema):
     Parameter schema for enumeration types.
     """
 
-    def __init__(self, values: list, parameter: Parameter, docstring: str = None):
-        super().__init__(parameter, docstring)
+    def __init__(self, values: list, parameter: Parameter, index: int, docstring: str = None):
+        super().__init__(parameter, index, docstring)
         self.enum_values = values
 
     def _get_type(self) -> Union[str, Parameter.empty]:
@@ -202,9 +204,9 @@ class EnumTypeParameterSchema(EnumParameterSchema):
     Parameter schema for enum.Enum types.
     """
 
-    def __init__(self, parameter: Parameter, docstring: str = None):
+    def __init__(self, parameter: Parameter, index: int, docstring: str = None):
         values = [e.name for e in parameter.annotation]
-        super().__init__(values, parameter, docstring)
+        super().__init__(values, parameter, index, docstring)
 
     @staticmethod
     def matches(parameter: Parameter) -> bool:
@@ -233,9 +235,9 @@ class LiteralTypeParameterSchema(EnumParameterSchema):
     Parameter schema for typing.Literal types.
     """
 
-    def __init__(self, parameter: Parameter, docstring: str = None):
+    def __init__(self, parameter: Parameter, index: int, docstring: str = None):
         values = list(typing.get_args(parameter.annotation))
-        super().__init__(values, parameter, docstring)
+        super().__init__(values, parameter, index, docstring)
 
     @staticmethod
     def matches(parameter: Parameter) -> bool:
