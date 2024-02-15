@@ -11,7 +11,6 @@ class Config:
     def __init__(self, parent: Optional[Config] = None, **settings):
         self.parent = parent
         self.settings = settings
-        self.tags: list[str] = self._get_setting("tags", [])
         self.ignored_parameters: list[str] = self._get_setting(
             "ignored_parameters", ["self", "args", "kwargs"]
         )

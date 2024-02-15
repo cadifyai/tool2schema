@@ -78,6 +78,7 @@ def SaveGPTEnabled(module: ModuleType, path: str, schema_type: SchemaType = Sche
 class _GPTEnabled:
     def __init__(self, func, **kwargs) -> None:
         self.func = func
+        self.tags = kwargs.pop("tags", [])
         self.config = Config(tool2schema.CONFIG, **kwargs)
         self.schema = FunctionSchema(func, self.config)
         functools.update_wrapper(self, func)
@@ -98,10 +99,6 @@ class _GPTEnabled:
                 kwargs[key] = self.schema.parameter_schemas[key].decode_value(kwargs[key])
 
         return self.func(*args, **kwargs)
-
-    @property
-    def tags(self):
-        return self.config.tags
 
     def gpt_enabled(self) -> bool:
         return True
