@@ -165,7 +165,9 @@ class ReferenceSchema:
         :param param: Name of the parameter to remove
         """
         self.schema["function"]["parameters"]["properties"].pop(param)
-        self.schema["function"]["parameters"]["required"].pop(param, None)
+
+        if required := self.get_required_parameters():
+            required.remove(param)
 
     def get_param(self, param: str) -> dict:
         """
@@ -184,6 +186,12 @@ class ReferenceSchema:
         :param value: The new parameter dictionary
         """
         self.schema["function"]["parameters"]["properties"][param] = value
+
+    def get_required_parameters(self) -> list[str]:
+        """
+        Get the list of required parameters, or none if not present.
+        """
+        return self.schema["function"]["parameters"].get("required")
 
 
 ###########################################
@@ -650,8 +658,9 @@ def function_custom_enum(a: CustomEnum, b: str, c: bool = False, d: list[int] = 
 
 def test_function_custom_enum():
     rf = ReferenceSchema(function_custom_enum)
-    rf.get_param("a")["type"] = "string"
-    rf.get_param("a")["enum"] = [x.name for x in CustomEnum]
+    a = rf.get_param("a")
+    a["type"] = "string"
+    a["enum"] = [x.name for x in CustomEnum]
     assert function_custom_enum.schema.to_json() == rf.schema
     assert function_custom_enum.tags == []
 
@@ -671,3 +680,29 @@ def test_function_custom_enum():
     # Verify it is possible to invoke the function with positional args
     a, _, _, _ = function_custom_enum(CustomEnum.A, "", False, [])
     assert a == CustomEnum.A
+
+
+@GPTEnabled
+def function_custom_enum_default_value(
+    a: int, b: CustomEnum = CustomEnum.B, c: bool = False, d: list[int] = [1, 2, 3]
+):
+    """
+    This is a test function.
+
+    :param a: This is a parameter
+    :param b: This is another parameter
+    :param c: This is a boolean parameter
+    :param d: This is a list parameter
+    """
+    return a, b, c, d
+
+
+def test_function_custom_enum_default_value():
+    rf = ReferenceSchema(function_custom_enum_default_value)
+    rf.get_required_parameters().remove("b")
+    b = rf.get_param("b")
+    b["type"] = "string"
+    b["default"] = "B"
+    b["enum"] = [x.name for x in CustomEnum]
+    assert function_custom_enum_default_value.schema.to_json() == rf.schema
+    assert function_custom_enum_default_value.tags == []

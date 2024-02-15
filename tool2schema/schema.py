@@ -88,12 +88,12 @@ class _GPTEnabled:
             for p in self.schema.parameter_schemas.values():
                 if p.index == i:
                     # Convert the JSON value to the type expected by the method
-                    args[i] = p.parse_value(arg)
+                    args[i] = p.decode_value(arg)
 
         for key in kwargs:
             if key in self.schema.parameter_schemas:
                 # Convert the JSON value to the type expected by the method
-                kwargs[key] = self.schema.parameter_schemas[key].parse_value(kwargs[key])
+                kwargs[key] = self.schema.parameter_schemas[key].decode_value(kwargs[key])
 
         return self.func(*args, **kwargs)
 

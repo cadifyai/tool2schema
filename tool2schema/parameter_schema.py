@@ -83,6 +83,9 @@ class ParameterSchema:
         Get the default value for this parameter, when present, to be added to the JSON schema.
         Return `Parameter.empty` to omit the default value from the schema.
         """
+        if self.parameter.default != Parameter.empty:
+            return self.encode_value(self.parameter.default)
+
         return self.parameter.default
 
     def to_json(self) -> dict:
@@ -105,7 +108,17 @@ class ParameterSchema:
 
         return json
 
-    def parse_value(self, value):
+    def encode_value(self, value):
+        """
+        Convert the given value to its JSON representation. Overriding methods should
+        also override `decode_value` to convert the value back to its original type.
+
+        :param value: The value to be converted
+        :return: The JSON representation of the value
+        """
+        return value
+
+    def decode_value(self, value):
         """
         Convert the given value from the JSON representation to an instance
         that can be passed to the original method as a parameter. Overriding
@@ -216,7 +229,15 @@ class EnumTypeParameterSchema(EnumParameterSchema):
             and issubclass(parameter.annotation, Enum)
         )
 
-    def parse_value(self, value):
+    def encode_value(self, value):
+        """
+        Convert an enum instance to its name.
+
+        :param value: The enum instance to be converted.
+        """
+        return value.name
+
+    def decode_value(self, value):
         """
         Convert an enum name to an instance of the enum type.
 
