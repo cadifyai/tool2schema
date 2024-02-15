@@ -741,7 +741,7 @@ def test_function_ignored_parameters():
 ###############################
 
 
-def test_global_configuration_ignored_args():
+def test_global_configuration_ignored_parameters():
     # Change the global configuration
     tool2schema.CONFIG.ignored_parameters = ["b", "c"]
 
