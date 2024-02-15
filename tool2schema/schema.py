@@ -214,7 +214,7 @@ class FunctionSchema:
         parameters = dict()
 
         for i, (n, o) in enumerate(inspect.signature(self.f).parameters.items()):
-            if n in self.config.ignored_parameters:
+            if n in self.config.ignore_parameters:
                 continue  # Skip ignored parameter
 
             for Param in PARAMETER_SCHEMAS:

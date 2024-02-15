@@ -710,12 +710,12 @@ def test_function_custom_enum_default_value():
 
 
 #############################
-#  Test ignored_parameters  #
+#  Test ignore_parameters  #
 #############################
 
 
-@GPTEnabled(ignored_parameters=["a", "d"])
-def function_ignored_parameters(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
+@GPTEnabled(ignore_parameters=["a", "d"])
+def function_ignore_parameters(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
     This is a test function.
 
@@ -727,13 +727,13 @@ def function_ignored_parameters(a: int, b: str, c: bool = False, d: list[int] = 
     return a, b, c, d
 
 
-def test_function_ignored_parameters():
-    rf = ReferenceSchema(function_ignored_parameters)
+def test_function_ignore_parameters():
+    rf = ReferenceSchema(function_ignore_parameters)
     rf.remove_param("a")
     rf.remove_param("d")
-    assert function_ignored_parameters.schema.to_json() == rf.schema
-    assert function_ignored_parameters.schema.to_json(SchemaType.TUNE) == rf.tune_schema
-    assert function_ignored_parameters.tags == []
+    assert function_ignore_parameters.schema.to_json() == rf.schema
+    assert function_ignore_parameters.schema.to_json(SchemaType.TUNE) == rf.tune_schema
+    assert function_ignore_parameters.tags == []
 
 
 ###############################
@@ -741,9 +741,9 @@ def test_function_ignored_parameters():
 ###############################
 
 
-def test_global_configuration_ignored_parameters():
+def test_global_configuration_ignore_parameters():
     # Change the global configuration
-    tool2schema.CONFIG.ignored_parameters = ["b", "c"]
+    tool2schema.CONFIG.ignore_parameters = ["b", "c"]
 
     # We have to re-define the function in this scope
     # to use the updated configuration
