@@ -63,9 +63,7 @@ def FindGPTEnabledByTag(module: ModuleType, tag: str) -> list[Callable]:
     return [x for x in FindGPTEnabled(module) if x.has(tag)]
 
 
-def SaveGPTEnabled(
-    module: ModuleType, path: str, schema_type: SchemaType = SchemaType.API
-):
+def SaveGPTEnabled(module: ModuleType, path: str, schema_type: SchemaType = SchemaType.API):
     """
     Save all function schemas with the GPTEnabled decorator to a file.
 
@@ -89,9 +87,7 @@ class _GPTEnabled:
         for key in kwargs:
             if key in self.schema.parameter_schemas:
                 # Convert the JSON value to the type expected by the method
-                kwargs[key] = self.schema.parameter_schemas[key].parse_value(
-                    kwargs[key]
-                )
+                kwargs[key] = self.schema.parameter_schemas[key].parse_value(kwargs[key])
 
         return self.func(*args, **kwargs)
 
@@ -121,9 +117,7 @@ def GPTEnabled(func=None, **kwargs):
 class FunctionSchema:
     """Automatically create a function schema for OpenAI."""
 
-    def __init__(
-        self, f: Callable, config: Config, schema_type: SchemaType = SchemaType.API
-    ):
+    def __init__(self, f: Callable, config: Config, schema_type: SchemaType = SchemaType.API):
         """
         Initialize FunctionSchema for the given function.
 
@@ -144,9 +138,7 @@ class FunctionSchema:
         :param schema_type: Type of schema to return
         """
         if schema_type == SchemaType.TUNE:
-            return FunctionSchema(self.f, self.config, schema_type).to_json()[
-                "function"
-            ]
+            return FunctionSchema(self.f, self.config, schema_type).to_json()["function"]
         return self.schema
 
     def add_enum(self, n: str, enum: list) -> "FunctionSchema":
@@ -181,9 +173,7 @@ class FunctionSchema:
         :return: The function description, or None if not present
         """
         if docstring := self.f.__doc__:  # Check if docstring exists
-            docstring = " ".join(
-                [x.strip() for x in docstring.replace("\n", " ").split()]
-            )
+            docstring = " ".join([x.strip() for x in docstring.replace("\n", " ").split()])
             if desc := re.findall(r"(.*?):param", docstring):
                 return desc[0].strip()
 

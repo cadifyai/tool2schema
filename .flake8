@@ -1,0 +1,21 @@
+[flake8]
+max_line_length = 100
+indent_size = 4
+max_complexity = 10
+exclude =
+    # No need to traverse our git directory
+    .git,
+    # There's no value in checking cache directories
+    __pycache__,
+    # Contains logs which are not needed to be checked
+    log,
+    # Resource files that don't need checking
+    resources,
+    # Icons that don't need checking
+    icons
+    # VS Code configuration files
+    .vscode
+    # Github Actions configuration files
+    .github
+    # Ignore Fusion 360 API files
+    fusion360utils

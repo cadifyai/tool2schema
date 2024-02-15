@@ -1,6 +1,7 @@
 # flake8: noqa
 __version__ = "v0.6.0"
 
+from .config import Config
 from .schema import (
     FindGPTEnabled,
     FindGPTEnabledByName,
@@ -10,8 +11,6 @@ from .schema import (
     SaveGPTEnabled,
     SchemaType,
 )
-
-from .config import Config
 
 # Default global configuration
 CONFIG = Config()
