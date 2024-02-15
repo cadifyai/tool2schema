@@ -166,7 +166,7 @@ class ReferenceSchema:
         """
         self.schema["function"]["parameters"]["properties"].pop(param)
 
-        if required := self.get_required_parameters():
+        if (required := self.get_required_parameters()) and param in required:
             required.remove(param)
 
     def get_param(self, param: str) -> dict:
