@@ -151,7 +151,9 @@ class FunctionSchema:
         :param enum: The list of values for the enum parameter
         """
         p = self.parameter_schemas[n]
-        self.parameter_schemas[n] = EnumParameterSchema(enum, p.parameter, p.index, p.docstring)
+        self.parameter_schemas[n] = EnumParameterSchema(
+            enum, p.parameter, p.index, self.config, p.docstring
+        )
         return self
 
     def _get_schema(self) -> dict:
@@ -219,7 +221,7 @@ class FunctionSchema:
 
             for Param in PARAMETER_SCHEMAS:
                 if Param.matches(o):
-                    parameters[n] = Param(o, i, self.f.__doc__)
+                    parameters[n] = Param(o, i, self.config, self.f.__doc__)
                     break
 
         return parameters
@@ -230,14 +232,14 @@ class FunctionSchema:
 
         :return: The function description, or None if not present
         """
-        if docstring := self.f.__doc__:  # Check if docstring exists
-            docstring = " ".join([x.strip() for x in docstring.replace("\n", " ").split()])
-            if desc := re.findall(r"(.*?):param", docstring):
-                return desc[0].strip()
+        if not (docstring := self.f.__doc__) or self.config.ignore_descriptions:
+            return None
 
-            return docstring.strip()
+        docstring = " ".join([x.strip() for x in docstring.replace("\n", " ").split()])
+        if desc := re.findall(r"(.*?):param", docstring):
+            return desc[0].strip()
 
-        return None
+        return docstring.strip()
 
     def _get_required_parameters(self) -> list[str]:
         """

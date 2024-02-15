@@ -14,6 +14,7 @@ class Config:
         self.ignore_parameters: list[str] = self._get_setting(
             "ignore_parameters", ["self", "args", "kwargs"]
         )
+        self.ignore_descriptions: bool = self._get_setting("ignore_descriptions", False)
 
     def _get_setting(self, name: str, default):
         """
