@@ -9,7 +9,7 @@ from typing import Callable, Optional
 
 import tool2schema
 from tool2schema.config import Config
-from tool2schema.parameter_schema import PARAMETER_SCHEMAS, ParameterSchema
+from tool2schema.parameter_schema import PARAMETER_SCHEMAS, EnumParameterSchema, ParameterSchema
 
 
 class SchemaType(Enum):
@@ -84,10 +84,18 @@ class _GPTEnabled:
 
     def __call__(self, *args, **kwargs):
 
+        args = list(args)  # Tuple is immutable, thus convert to list
+
+        for i, arg in enumerate(args):
+            for p in self.schema.parameter_schemas.values():
+                if p.index == i:
+                    # Convert the JSON value to the type expected by the method
+                    args[i] = p.decode_value(arg)
+
         for key in kwargs:
             if key in self.schema.parameter_schemas:
                 # Convert the JSON value to the type expected by the method
-                kwargs[key] = self.schema.parameter_schemas[key].parse_value(kwargs[key])
+                kwargs[key] = self.schema.parameter_schemas[key].decode_value(kwargs[key])
 
         return self.func(*args, **kwargs)
 
@@ -117,20 +125,16 @@ def GPTEnabled(func=None, **kwargs):
 class FunctionSchema:
     """Automatically create a function schema for OpenAI."""
 
-    def __init__(self, f: Callable, config: Config, schema_type: SchemaType = SchemaType.API):
+    def __init__(self, f: Callable, config: Config):
         """
         Initialize FunctionSchema for the given function.
 
         :param f: The function to create a schema for
         :param config: Configuration settings
-        :param schema_type: Type of schema
         """
         self.f = f
         self.config = config
-        self.schema_type: SchemaType = schema_type
-        self.schema: dict = {}
-        self.parameter_schemas: dict[str, ParameterSchema] = {}
-        self._populate_schema()
+        self.parameter_schemas: dict[str, ParameterSchema] = self._get_parameter_schemas()
 
     def to_json(self, schema_type: SchemaType = SchemaType.API) -> dict:
         """
@@ -138,8 +142,9 @@ class FunctionSchema:
         :param schema_type: Type of schema to return
         """
         if schema_type == SchemaType.TUNE:
-            return FunctionSchema(self.f, self.config, schema_type).to_json()["function"]
-        return self.schema
+            return self._get_function_schema(schema_type)
+
+        return self._get_schema()
 
     def add_enum(self, n: str, enum: list) -> "FunctionSchema":
         """
@@ -148,25 +153,81 @@ class FunctionSchema:
         :param n: The name of the parameter with the enum values
         :param enum: The list of values for the enum parameter
         """
-        self.schema["function"]["parameters"]["properties"][n]["enum"] = enum
+        p = self.parameter_schemas[n]
+        self.parameter_schemas[n] = EnumParameterSchema(enum, p.parameter, p.index, p.docstring)
         return self
 
-    def _populate_schema(self) -> None:
+    def _get_schema(self) -> dict:
         """
-        Populate the schema dictionary.
+        Get the complete schema dictionary.
         """
-        self.schema["type"] = "function"
-        self.schema["function"] = {"name": self.f.__name__}
+        # This dictionary is only used with the API schema type
+        return {"type": "function", "function": self._get_function_schema(SchemaType.API)}
 
-        description = self._extract_description()
+    def _get_function_schema(self, schema_type: SchemaType) -> dict:
+        """
+        Get the function schema dictionary.
+        """
+        schema = {"name": self.f.__name__}
 
-        # Add the function description even if it is an empty string
-        if description is not None:
-            self.schema["function"]["description"] = description
+        if self.parameter_schemas or schema_type == SchemaType.TUNE:
+            # If the schema type is tune, add the dictionary even if there are no parameters
+            schema["parameters"] = self._get_parameters_schema(schema_type)
 
-        self._populate_parameter_schema()
+        if (description := self._get_description()) is not None:
+            # Add the function description even if it is an empty string
+            schema["description"] = description
 
-    def _extract_description(self) -> Optional[str]:
+        return schema
+
+    def _get_parameters_schema(self, schema_type: SchemaType) -> dict:
+        """
+        Get the parameters schema dictionary.
+        """
+        schema = {"type": "object"}
+
+        if self.parameter_schemas or schema_type == SchemaType.TUNE:
+            # If the schema type is tune, add the dictionary even if empty
+            schema["properties"] = self._get_parameter_properties_schema()
+
+            if required := self._get_required_parameters():
+                schema["required"] = required
+
+        return schema
+
+    def _get_parameter_properties_schema(self) -> dict:
+        """
+        Get the properties schema for the function.
+        """
+        schema = dict()
+
+        for n, p in self.parameter_schemas.items():
+            schema[n] = p.to_json()
+
+        return schema
+
+    def _get_parameter_schemas(self) -> dict[str, ParameterSchema]:
+        """
+        Get a dictionary of parameter schemas for the function.
+        Ignored parameters are not included in the dictionary.
+
+        :return: A dictionary with parameter names as keys and
+            parameter schemas as values
+        """
+        parameters = dict()
+
+        for i, (n, o) in enumerate(inspect.signature(self.f).parameters.items()):
+            if n in self.config.ignored_parameters:
+                continue  # Skip ignored parameter
+
+            for Param in PARAMETER_SCHEMAS:
+                if Param.matches(o):
+                    parameters[n] = Param(o, i, self.f.__doc__)
+                    break
+
+        return parameters
+
+    def _get_description(self) -> Optional[str]:
         """
         Extract the function description, if present.
 
@@ -181,38 +242,15 @@ class FunctionSchema:
 
         return None
 
-    def _populate_parameter_schema(self) -> None:
+    def _get_required_parameters(self) -> list[str]:
         """
-        Populate the parameters' dictionary.
-        """
-        json_schema = dict()
+        Get the list of required parameters.
 
-        for n, o in inspect.signature(self.f).parameters.items():
-            if n in self.config.ignored_parameters:
-                continue  # Skip ignored parameter
-
-            for Param in PARAMETER_SCHEMAS:
-                if Param.matches(o):
-                    p = Param(o, self.f.__doc__)
-                    json_schema[n] = p.to_json()
-                    self.parameter_schemas[n] = p
-                    break
-
-        if self.parameter_schemas or self.schema_type == SchemaType.TUNE:
-            self.schema["function"]["parameters"] = {"type": "object", "properties": {}}
-
-        if self.parameter_schemas:
-            self.schema["function"]["parameters"]["properties"] = json_schema
-            self._populate_required_parameters()
-
-    def _populate_required_parameters(self) -> None:
-        """
-        Populate the list of required parameters.
+        :return: The list of parameters without a default value
         """
         req_params = []
-        for schema in self.parameter_schemas.values():
-            if schema.parameter.default == Parameter.empty:
-                req_params.append(schema.parameter.name)
+        for n, p in self.parameter_schemas.items():
+            if p.parameter.default == Parameter.empty:
+                req_params.append(n)
 
-        if req_params:
-            self.schema["function"]["parameters"]["required"] = req_params
+        return req_params
