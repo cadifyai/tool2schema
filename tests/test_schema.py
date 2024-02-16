@@ -165,7 +165,7 @@ class ReferenceSchema:
 
         :param param: Name of the parameter to remove
         """
-        self.schema["function"]["parameters"]["properties"].pop(param)
+        self.get_parameters()["properties"].pop(param)
 
         if (required := self.get_required_parameters()) and param in required:
             required.remove(param)
@@ -177,7 +177,7 @@ class ReferenceSchema:
         :param param: Name of the parameter
         :return: The parameter dictionary
         """
-        return self.schema["function"]["parameters"]["properties"][param]
+        return self.get_parameters()["properties"][param]
 
     def set_param(self, param, value: dict) -> None:
         """
@@ -186,13 +186,19 @@ class ReferenceSchema:
         :param param: Name of the parameter
         :param value: The new parameter dictionary
         """
-        self.schema["function"]["parameters"]["properties"][param] = value
+        self.get_parameters()["properties"][param] = value
 
     def get_required_parameters(self) -> list[str]:
         """
         Get the list of required parameters, or none if not present.
         """
-        return self.schema["function"]["parameters"].get("required")
+        return self.get_parameters().get("required")
+
+    def get_parameters(self) -> dict:
+        """
+        Get the parameters' dictionary.
+        """
+        return self.schema["function"]["parameters"]
 
     def remove_descriptions(self) -> None:
         """
@@ -202,7 +208,7 @@ class ReferenceSchema:
         self.schema["function"].pop("description", None)
 
         # Remove all parameter descriptions
-        for p in self.schema["function"]["parameters"]["properties"]:
+        for p in self.get_parameters()["properties"]:
             self.get_param(p).pop("description", None)
 
 
@@ -768,6 +774,28 @@ def test_function_ignore_descriptions():
     assert function_ignore_descriptions.tags == []
 
 
+@GPTEnabled(ignore_all_parameters=True)
+def function_ignore_all_parameters(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
+    """
+    This is a test function.
+
+    :param a: This is a parameter
+    :param b: This is another parameter
+    :param c: This is a boolean parameter
+    :param d: This is a list parameter
+    """
+    return a, b, c, d
+
+
+def test_function_ignore_all_parameters():
+    rf = ReferenceSchema(function_ignore_all_parameters)
+    rf.get_parameters().pop("properties")
+    rf.get_parameters().pop("required")
+    assert function_ignore_all_parameters.schema.to_json() == rf.schema
+    assert function_ignore_all_parameters.schema.to_json(SchemaType.TUNE) == rf.tune_schema
+    assert function_ignore_all_parameters.tags == []
+
+
 ###############################
 #  Test global configuration  #
 ###############################
@@ -818,6 +846,22 @@ def test_global_configuration_ignore_descriptions():
 
     rf = ReferenceSchema(func)
     rf.remove_descriptions()
+
+    assert func.schema.to_json() == rf.schema
+    assert func.schema.to_json(SchemaType.TUNE) == rf.tune_schema
+    assert func.tags == []
+
+
+def test_global_configuration_ignore_all_parameters():
+    # Change the global configuration
+    tool2schema.CONFIG.ignore_all_parameters = True
+
+    func = get_locally_defined_function()  # Get function with the updated configuration
+    tool2schema._reset_config()  # Reset the configuration to the default
+
+    rf = ReferenceSchema(func)
+    rf.get_parameters().pop("properties")
+    rf.get_parameters().pop("required")
 
     assert func.schema.to_json() == rf.schema
     assert func.schema.to_json(SchemaType.TUNE) == rf.tune_schema
