@@ -188,7 +188,7 @@ class ReferenceSchema:
         """
         self.get_parameters()["properties"][param] = value
 
-    def get_required_parameters(self) -> list[str]:
+    def get_required_parameters(self) -> Optional[list[str]]:
         """
         Get the list of required parameters, or none if not present.
         """
@@ -827,7 +827,6 @@ def test_global_configuration_ignore_parameters():
     tool2schema.CONFIG.ignore_parameters = ["b", "c"]
 
     func = get_locally_defined_function()  # Get function with the updated configuration
-    tool2schema._reset_config()  # Reset the configuration to the default
 
     rf = ReferenceSchema(func)
     rf.remove_param("b")
@@ -836,13 +835,14 @@ def test_global_configuration_ignore_parameters():
     assert func.schema.to_json(SchemaType.TUNE) == rf.tune_schema
     assert func.tags == []
 
+    tool2schema.CONFIG.reset_default()  # Reset the configuration to the default
+
 
 def test_global_configuration_ignore_descriptions():
     # Change the global configuration
     tool2schema.CONFIG.ignore_descriptions = True
 
     func = get_locally_defined_function()  # Get function with the updated configuration
-    tool2schema._reset_config()  # Reset the configuration to the default
 
     rf = ReferenceSchema(func)
     rf.remove_descriptions()
@@ -851,13 +851,14 @@ def test_global_configuration_ignore_descriptions():
     assert func.schema.to_json(SchemaType.TUNE) == rf.tune_schema
     assert func.tags == []
 
+    tool2schema.CONFIG.reset_default()  # Reset the configuration to the default
+
 
 def test_global_configuration_ignore_all_parameters():
     # Change the global configuration
     tool2schema.CONFIG.ignore_all_parameters = True
 
     func = get_locally_defined_function()  # Get function with the updated configuration
-    tool2schema._reset_config()  # Reset the configuration to the default
 
     rf = ReferenceSchema(func)
     rf.get_parameters().pop("properties")
@@ -866,3 +867,5 @@ def test_global_configuration_ignore_all_parameters():
     assert func.schema.to_json() == rf.schema
     assert func.schema.to_json(SchemaType.TUNE) == rf.tune_schema
     assert func.tags == []
+
+    tool2schema.CONFIG.reset_default()  # Reset the configuration to the default

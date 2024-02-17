@@ -14,11 +14,3 @@ from .schema import (
 
 # Default global configuration
 CONFIG = Config()
-
-
-def _reset_config():
-    """
-    Reset the configuration to the default settings.
-    """
-    global CONFIG
-    CONFIG = Config()
