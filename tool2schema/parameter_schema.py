@@ -93,14 +93,14 @@ class ParameterSchema:
         Return the json schema for this parameter.
         """
         fields = {
-            "description": self._get_description,
-            "default": self._get_default,
-            "items": self._get_items,
-            "type": self._get_type,
-            "enum": self._get_enum,
+            "description": self._get_description(),
+            "default": self._get_default(),
+            "items": self._get_items(),
+            "type": self._get_type(),
+            "enum": self._get_enum(),
         }
 
-        json = {field: value for field in fields if (value := fields[field]()) != Parameter.empty}
+        json = {f: v for f, v in fields.items() if v != Parameter.empty}
 
         return json
 
