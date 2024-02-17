@@ -759,7 +759,7 @@ def test_global_configuration_ignore_parameters():
         """
         return a, b, c, d
 
-    tool2schema._reset_config()  # Reset the configuration to the default
+    tool2schema.CONFIG.reset_default()
     rf = ReferenceSchema(_function)
     rf.remove_param("b")
     rf.remove_param("c")
