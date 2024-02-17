@@ -158,3 +158,14 @@ You can check if a function has a certain tag using the `has_tag` method.
 ```python
 my_function.has_tag("tag1")  # True
 ```
+
+### Disable parts of the schema
+
+You can provide `GPTEnabled` with a list of parameters to ignore, which will be omitted from the schema.
+For example:
+
+```python
+@GPTEnabled(ignore_parameters=["b", "c"])  # b and c will not be included in the schema
+def my_function(a: int, b: str, c: float):
+    # Function code here...
+```
