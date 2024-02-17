@@ -214,3 +214,13 @@ For example:
 def my_function(a: int, b: str, c: float):
     # Function code here...
 ```
+
+It is also possible to specify a value for `ignored_parameters` which will be used for all decorated functions
+unless explicitly overridden. It can be done by editing the global configuration as follows:
+
+```python
+import tool2schema
+
+# Ignore all parameters named "a" or "b" by default
+tool2schema.CONFIG.ignore_parameters = ["a", "b"]
+```
