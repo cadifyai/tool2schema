@@ -1,5 +1,6 @@
 import copy
-from typing import Callable, List, Optional
+from enum import Enum
+from typing import Callable, List, Literal, Optional
 
 from tool2schema import (
     FindGPTEnabled,
@@ -144,8 +145,8 @@ class ReferenceSchema:
     def __init__(self, f: Callable, reference_schema: Optional[dict] = None):
         """
         Initialize the schema.
-        :param f: The function to create the schema for.
-        :param reference_schema: The schema to start with, defaults to DEFAULT_SCHEMA.
+        :param f: The function to create the schema for
+        :param reference_schema: The schema to start with, defaults to DEFAULT_SCHEMA
         """
         self.schema = copy.deepcopy(reference_schema or DEFAULT_SCHEMA)
         self.schema["function"]["name"] = f.__name__
@@ -161,17 +162,19 @@ class ReferenceSchema:
         """
         Remove a parameter from the schema.
 
-        :param param: Name of the parameter to remove.
+        :param param: Name of the parameter to remove
         """
         self.schema["function"]["parameters"]["properties"].pop(param)
-        self.schema["function"]["parameters"]["required"].pop(param, None)
+
+        if (required := self.get_required_parameters()) and param in required:
+            required.remove(param)
 
     def get_param(self, param: str) -> dict:
         """
         Get a parameter dictionary from the schema.
 
-        :param param: Name of the parameter.
-        :return: The parameter dictionary.
+        :param param: Name of the parameter
+        :return: The parameter dictionary
         """
         return self.schema["function"]["parameters"]["properties"][param]
 
@@ -179,10 +182,16 @@ class ReferenceSchema:
         """
         Set a parameter dictionary.
 
-        :param param: Name of the parameter.
-        :param value: The new parameter dictionary.
+        :param param: Name of the parameter
+        :param value: The new parameter dictionary
         """
         self.schema["function"]["parameters"]["properties"][param] = value
+
+    def get_required_parameters(self) -> Optional[list[str]]:
+        """
+        Get the list of required parameters, or none if not present.
+        """
+        return self.schema["function"]["parameters"].get("required")
 
 
 ###########################################
@@ -245,9 +254,9 @@ def test_function_tags_tune():
     assert function_tags.tags == ["test"]
 
 
-########################################
-#  Example function to test with enum  #
-########################################
+#########################################################
+#  Example function to test with enum (using add_enum)  #
+#########################################################
 
 
 @GPTEnabled
@@ -270,6 +279,7 @@ def test_function_enum():
     rf = ReferenceSchema(function_enum)
     rf.get_param("a")["enum"] = [1, 2, 3]
     assert function_enum.schema.to_json() == rf.schema
+    assert function_enum.schema.to_json(SchemaType.TUNE) == rf.tune_schema
     assert function_enum.tags == []
 
 
@@ -568,3 +578,131 @@ def test_function_docstring():
 
     assert function_docstring.schema.to_json() == rf.schema
     assert function_docstring.tags == []
+
+
+######################################################
+#  Example functions with typing.Literal annotation  #
+######################################################
+
+
+@GPTEnabled
+def function_typing_literal_int(
+    a: Literal[1, 2, 3], b: str, c: bool = False, d: list[int] = [1, 2, 3]
+):
+    """
+    This is a test function.
+
+    :param a: This is a parameter
+    :param b: This is another parameter
+    :param c: This is a boolean parameter
+    :param d: This is a list parameter
+    """
+    return a, b, c, d
+
+
+def test_function_typing_literal_int():
+    # Check schema
+    rf = ReferenceSchema(function_typing_literal_int)
+    rf.get_param("a")["enum"] = [1, 2, 3]
+    assert function_typing_literal_int.schema.to_json() == rf.schema
+    assert function_typing_literal_int.tags == []
+
+
+@GPTEnabled
+def function_typing_literal_string(
+    a: Literal["a", "b", "c"], b: str, c: bool = False, d: list[int] = [1, 2, 3]
+):
+    """
+    This is a test function.
+
+    :param a: This is a parameter
+    :param b: This is another parameter
+    :param c: This is a boolean parameter
+    :param d: This is a list parameter
+    """
+    return a, b, c, d
+
+
+def test_function_typing_literal_string():
+    # Check schema
+    rf = ReferenceSchema(function_typing_literal_string)
+    rf.get_param("a")["enum"] = ["a", "b", "c"]
+    rf.get_param("a")["type"] = "string"
+    assert function_typing_literal_string.schema.to_json() == rf.schema
+    assert function_typing_literal_string.tags == []
+
+
+#################################################
+#  Example functions with enum.Enum annotation  #
+#################################################
+
+
+class CustomEnum(Enum):
+    A = 1
+    B = 2
+    C = 3
+
+
+@GPTEnabled
+def function_custom_enum(a: CustomEnum, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
+    """
+    This is a test function.
+
+    :param a: This is a parameter
+    :param b: This is another parameter
+    :param c: This is a boolean parameter
+    :param d: This is a list parameter
+    """
+    return a, b, c, d
+
+
+def test_function_custom_enum():
+    rf = ReferenceSchema(function_custom_enum)
+    a = rf.get_param("a")
+    a["type"] = "string"
+    a["enum"] = [x.name for x in CustomEnum]
+    assert function_custom_enum.schema.to_json() == rf.schema
+    assert function_custom_enum.tags == []
+
+    # Try invoking the function to verify that "A" is converted to CustomEnum.A,
+    # passing the value as a positional argument
+    a, _, _, _ = function_custom_enum(CustomEnum.A.name, b="", c=False, d=[])
+    assert a == CustomEnum.A
+
+    # Same as above but passing the value as a keyword argument
+    a, _, _, _ = function_custom_enum(a=CustomEnum.A.name, b="", c=False, d=[])
+    assert a == CustomEnum.A
+
+    # Verify it is possible to invoke the function with the Enum instance
+    a, _, _, _ = function_custom_enum(a=CustomEnum.A, b="", c=False, d=[])
+    assert a == CustomEnum.A
+
+    # Verify it is possible to invoke the function with positional args
+    a, _, _, _ = function_custom_enum(CustomEnum.A, "", False, [])
+    assert a == CustomEnum.A
+
+
+@GPTEnabled
+def function_custom_enum_default_value(
+    a: int, b: CustomEnum = CustomEnum.B, c: bool = False, d: list[int] = [1, 2, 3]
+):
+    """
+    This is a test function.
+
+    :param a: This is a parameter
+    :param b: This is another parameter
+    :param c: This is a boolean parameter
+    :param d: This is a list parameter
+    """
+    return a, b, c, d
+
+
+def test_function_custom_enum_default_value():
+    rf = ReferenceSchema(function_custom_enum_default_value)
+    rf.get_required_parameters().remove("b")
+    b = rf.get_param("b")
+    b["type"] = "string"
+    b["default"] = "B"
+    b["enum"] = [x.name for x in CustomEnum]
+    assert function_custom_enum_default_value.schema.to_json() == rf.schema
+    assert function_custom_enum_default_value.tags == []
