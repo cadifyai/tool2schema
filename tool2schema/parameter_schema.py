@@ -100,11 +100,7 @@ class ParameterSchema:
             "enum": self._get_enum,
         }
 
-        json = dict()
-
-        for field in fields:
-            if (value := fields[field]()) != Parameter.empty:
-                json[field] = value
+        json = {field: value for field in fields if (value := fields[field]()) != Parameter.empty}
 
         return json
 
@@ -235,7 +231,7 @@ class EnumTypeParameterSchema(EnumParameterSchema):
 
         :param value: The enum instance to be converted.
         """
-        return value.name
+        return value.name if isinstance(value, Enum) else value
 
     def decode_value(self, value):
         """
