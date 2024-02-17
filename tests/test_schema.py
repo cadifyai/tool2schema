@@ -188,7 +188,7 @@ class ReferenceSchema:
         """
         self.schema["function"]["parameters"]["properties"][param] = value
 
-    def get_required_parameters(self) -> list[str]:
+    def get_required_parameters(self) -> Optional[list[str]]:
         """
         Get the list of required parameters, or none if not present.
         """

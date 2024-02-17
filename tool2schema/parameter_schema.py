@@ -86,25 +86,23 @@ class ParameterSchema:
         if self.parameter.default != Parameter.empty:
             return self.encode_value(self.parameter.default)
 
-        return self.parameter.default
+        # Not that the default value may be present but None, we use
+        # Parameter.empty to indicate that the default value is not present
+        return Parameter.empty
 
     def to_json(self) -> dict:
         """
         Return the json schema for this parameter.
         """
         fields = {
-            "description": self._get_description,
-            "default": self._get_default,
-            "items": self._get_items,
-            "type": self._get_type,
-            "enum": self._get_enum,
+            "description": self._get_description(),
+            "default": self._get_default(),
+            "items": self._get_items(),
+            "type": self._get_type(),
+            "enum": self._get_enum(),
         }
 
-        json = dict()
-
-        for field in fields:
-            if (value := fields[field]()) != Parameter.empty:
-                json[field] = value
+        json = {f: v for f, v in fields.items() if v != Parameter.empty}
 
         return json
 
@@ -235,7 +233,7 @@ class EnumTypeParameterSchema(EnumParameterSchema):
 
         :param value: The enum instance to be converted.
         """
-        return value.name
+        return value.name if isinstance(value, Enum) else value
 
     def decode_value(self, value):
         """

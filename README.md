@@ -114,7 +114,53 @@ Any other parameter types will be listed as `object` in the schema.
 
 ### Enumerations
 
-If you want to limit the possible values of a parameter, you can use the `enum` keyword argument.
+If you want to limit the possible values of a parameter, you can use a `typing.Literal` type hint or a 
+subclass of `enum.Enum`. For example, using `typing.Literal`:
+
+```python
+import typing
+
+
+@GPTEnabled
+def my_function(a: int, b: typing.Literal["yes", "no"]):
+    """
+    Example function description.
+
+    :param a: First parameter
+    :param b: Second parameter
+    """
+    # Function code here...
+```
+
+Equivalent example using `enum.Enum`:
+
+```python
+from enum import Enum
+
+class MyEnum(Enum):
+    YES = 0
+    NO = 1
+
+
+@GPTEnabled
+def my_function(a: int, b: MyEnum):
+    """
+    Example function description.
+
+    :param a: First parameter
+    :param b: Second parameter
+    """
+    # Function code here...
+```
+
+In the case of `Enum` subclasses, note that the schema will include the enumeration names rather than the values.
+In the example above, the schema will include `["YES", "NO"]` rather than `[0, 1]`. 
+
+The `@GPTEnabled` decorator also allows to invoke the function using the name of the enum member rather than an 
+instance of the class. For example, you may invoke `my_function(1, MyEnum.YES)` as `my_function(1, "YES")`.
+
+If the enumeration values are not known at the time of defining the function, 
+you can add them later using the `add_enum` method.
 
 ```python
 @GPTEnabled
@@ -126,10 +172,9 @@ def my_function(a: int, b: str,):
     :param b: Second parameter
     """
     # Function code here...
+
 my_function.schema.add_enum("b", ["yes", "no"])
 ```
-
-The schema will then be updated to include the `enum` keyword.
 
 ### Tags
 
