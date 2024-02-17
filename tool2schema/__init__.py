@@ -13,4 +13,4 @@ from .schema import (
 )
 
 # Default global configuration
-CONFIG = Config()
+CONFIG: Config = Config()
