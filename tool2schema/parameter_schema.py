@@ -86,7 +86,9 @@ class ParameterSchema:
         if self.parameter.default != Parameter.empty:
             return self.encode_value(self.parameter.default)
 
-        return self.parameter.default
+        # Not that the default value may be present but None, we use
+        # Parameter.empty to indicate that the default value is not present
+        return Parameter.empty
 
     def to_json(self) -> dict:
         """
