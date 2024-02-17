@@ -70,7 +70,7 @@ class ParameterSchema:
         to be added to the JSON schema. Return `Parameter.empty` to omit the description
         from the schema.
         """
-        if self.docstring is None or self.config.ignore_descriptions:
+        if self.docstring is None or self.config.ignore_parameter_descriptions:
             return Parameter.empty
 
         docstring = " ".join([x.strip() for x in self.docstring.replace("\n", " ").split()])

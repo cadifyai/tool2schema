@@ -24,15 +24,26 @@ class Config:
         self._set_setting(Config.ignore_parameters.fget.__name__, value)
 
     @property
-    def ignore_descriptions(self) -> bool:
+    def ignore_function_description(self) -> bool:
         """
-        When true, omit all descriptions from the schema.
+        When true, omit the function description from the schema.
         """
-        return self._get_setting(Config.ignore_descriptions.fget.__name__, False)
+        return self._get_setting(Config.ignore_function_description.fget.__name__, False)
 
-    @ignore_descriptions.setter
-    def ignore_descriptions(self, value: bool):
-        self._set_setting(Config.ignore_descriptions.fget.__name__, value)
+    @ignore_function_description.setter
+    def ignore_function_description(self, value: bool):
+        self._set_setting(Config.ignore_function_description.fget.__name__, value)
+
+    @property
+    def ignore_parameter_descriptions(self) -> bool:
+        """
+        When true, omit the parameter descriptions from the schema.
+        """
+        return self._get_setting(Config.ignore_parameter_descriptions.fget.__name__, False)
+
+    @ignore_parameter_descriptions.setter
+    def ignore_parameter_descriptions(self, value: bool):
+        self._set_setting(Config.ignore_parameter_descriptions.fget.__name__, value)
 
     @property
     def ignore_all_parameters(self) -> bool:

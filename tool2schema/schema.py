@@ -239,7 +239,7 @@ class FunctionSchema:
 
         :return: The function description, or None if not present
         """
-        if not (docstring := self.f.__doc__) or self.config.ignore_descriptions:
+        if not (docstring := self.f.__doc__) or self.config.ignore_function_description:
             return None
 
         docstring = " ".join([x.strip() for x in docstring.replace("\n", " ").split()])
