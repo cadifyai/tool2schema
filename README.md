@@ -217,12 +217,12 @@ def my_function(a: int, b: str, c: float):
 
 The available settings are:
 - `ignore_parameters`: A list of parameter names to exclude from the schema (defaults to `[]`).
+- `ignore_all_parameters`: A boolean value indicating whether to exclude all parameters from the schema
+  (defaults to `False`).
 - `ignore_function_description`: A boolean value indicating whether to exclude the function description from 
   the schema (defaults to `False`).
 - `ignore_parameter_descriptions`: A boolean value indicating whether to exclude all parameter descriptions
   from the schema (defaults to `False`).
-- `ignore_all_parameters`: A boolean value indicating whether to exclude all parameters from the schema
-  (defaults to `False`).
 
 It is also possible to specify the settings globally, so that they apply to all functions
 unless explicitly overridden. It can be done by editing the global configuration as follows:
