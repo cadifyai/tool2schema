@@ -2,6 +2,7 @@ import copy
 from enum import Enum
 from typing import Callable, List, Literal, Optional
 
+import tool2schema
 from tool2schema import (
     FindGPTEnabled,
     FindGPTEnabledByName,
@@ -706,3 +707,81 @@ def test_function_custom_enum_default_value():
     b["enum"] = [x.name for x in CustomEnum]
     assert function_custom_enum_default_value.schema.to_json() == rf.schema
     assert function_custom_enum_default_value.tags == []
+
+
+#############################
+#  Test ignore_parameters  #
+#############################
+
+
+@GPTEnabled(ignore_parameters=["a", "d"])
+def function_ignore_parameters(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
+    """
+    This is a test function.
+
+    :param a: This is a parameter
+    :param b: This is another parameter
+    :param c: This is a boolean parameter
+    :param d: This is a list parameter
+    """
+    return a, b, c, d
+
+
+def test_function_ignore_parameters():
+    rf = ReferenceSchema(function_ignore_parameters)
+    rf.remove_param("a")
+    rf.remove_param("d")
+    assert function_ignore_parameters.schema.to_json() == rf.schema
+    assert function_ignore_parameters.schema.to_json(SchemaType.TUNE) == rf.tune_schema
+    assert function_ignore_parameters.tags == []
+
+
+###############################
+#  Test global configuration  #
+###############################
+
+
+def test_global_configuration_ignore_parameters():
+    # Change the global configuration
+    tool2schema.CONFIG.ignore_parameters = ["b", "c"]
+
+    # We have to re-define the function in this scope
+    # to use the updated configuration
+    @GPTEnabled
+    def _function(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
+        """
+        This is a test function.
+
+        :param a: This is a parameter
+        :param b: This is another parameter
+        :param c: This is a boolean parameter
+        :param d: This is a list parameter
+        """
+        return a, b, c, d
+
+    rf = ReferenceSchema(_function)
+    rf.remove_param("b")
+    rf.remove_param("c")
+    assert _function.schema.to_json() == rf.schema
+    assert _function.schema.to_json(SchemaType.TUNE) == rf.tune_schema
+    assert _function.tags == []
+
+    tool2schema.CONFIG.reset_default()
+
+
+#######################
+#  Test Config class  #
+#######################
+
+
+def test_reset_config():
+    config = tool2schema.config.Config(ignore_parameters=["a"])
+    config.reset_default()  # Should not reset the arguments given in the constructor
+    assert config.ignore_parameters == ["a"]
+
+
+def test_reset_config_edit_list():
+    config = tool2schema.config.Config(ignore_parameters=["a", "b"])
+    config.ignore_parameters = ["c", "d"]
+    config.reset_default()
+    assert config.ignore_parameters == ["a", "b"]

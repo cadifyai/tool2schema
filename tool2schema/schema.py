@@ -7,6 +7,8 @@ from inspect import Parameter
 from types import ModuleType
 from typing import Callable, Optional
 
+import tool2schema
+from tool2schema.config import Config
 from tool2schema.parameter_schema import PARAMETER_SCHEMAS, EnumParameterSchema, ParameterSchema
 
 
@@ -76,8 +78,9 @@ def SaveGPTEnabled(module: ModuleType, path: str, schema_type: SchemaType = Sche
 class _GPTEnabled:
     def __init__(self, func, **kwargs) -> None:
         self.func = func
-        self.schema = FunctionSchema(func)
-        self.tags = kwargs.get("tags", [])
+        self.tags = kwargs.pop("tags", [])
+        self.config = Config(tool2schema.CONFIG, **kwargs)
+        self.schema = FunctionSchema(func, self.config)
         functools.update_wrapper(self, func)
 
     def __call__(self, *args, **kwargs):
@@ -119,13 +122,15 @@ def GPTEnabled(func=None, **kwargs):
 class FunctionSchema:
     """Automatically create a function schema for OpenAI."""
 
-    def __init__(self, f: Callable):
+    def __init__(self, f: Callable, config: Config):
         """
         Initialize FunctionSchema for the given function.
 
-        :param f: The function to create a schema for;
+        :param f: The function to create a schema for
+        :param config: Configuration settings
         """
         self.f = f
+        self.config = config
         self.parameter_schemas: dict[str, ParameterSchema] = self._get_parameter_schemas()
 
     def to_json(self, schema_type: SchemaType = SchemaType.API) -> dict:
@@ -209,8 +214,8 @@ class FunctionSchema:
         parameters = dict()
 
         for i, (n, o) in enumerate(inspect.signature(self.f).parameters.items()):
-            if n == "kwargs":
-                continue  # Skip kwargs
+            if n in self.config.ignore_parameters:
+                continue  # Skip ignored parameter
 
             for Param in PARAMETER_SCHEMAS:
                 if Param.matches(o):
