@@ -767,3 +767,21 @@ def test_global_configuration_ignore_parameters():
     assert _function.tags == []
 
     tool2schema.CONFIG.reset_default()
+
+
+#######################
+#  Test Config class  #
+#######################
+
+
+def test_reset_config():
+    config = tool2schema.config.Config(ignore_parameters=["a"])
+    config.reset_default()  # Should not reset the arguments given in the constructor
+    assert config.ignore_parameters == ["a"]
+
+
+def test_reset_config_edit_list():
+    config = tool2schema.config.Config(ignore_parameters=["a", "b"])
+    config.ignore_parameters = ["c", "d"]
+    config.reset_default()
+    assert config.ignore_parameters == ["a", "b"]
