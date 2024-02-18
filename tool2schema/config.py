@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 from typing import Optional
 
 
@@ -11,6 +12,7 @@ class Config:
     def __init__(self, parent: Optional[Config] = None, **settings):
         self._parent = parent
         self._settings = settings
+        self._initial_settings = copy.deepcopy(settings)
 
     @property
     def ignore_parameters(self) -> list[str]:
@@ -60,7 +62,7 @@ class Config:
         """
         Reset the configuration to the default settings.
         """
-        self._settings = {}
+        self._settings = copy.deepcopy(self._initial_settings)
 
     def _get_setting(self, name: str, default):
         """
