@@ -759,10 +759,11 @@ def test_global_configuration_ignore_parameters():
         """
         return a, b, c, d
 
-    tool2schema.CONFIG.reset_default()
     rf = ReferenceSchema(_function)
     rf.remove_param("b")
     rf.remove_param("c")
     assert _function.schema.to_json() == rf.schema
     assert _function.schema.to_json(SchemaType.TUNE) == rf.tune_schema
     assert _function.tags == []
+
+    tool2schema.CONFIG.reset_default()
