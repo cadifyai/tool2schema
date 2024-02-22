@@ -852,79 +852,50 @@ def global_config() -> tool2schema.config.Config:
     tool2schema.CONFIG.reset_default()
 
 
-def get_locally_defined_function():
-    """
-    Redefine `function` in this local scope, reflecting any updates on
-    the global configuration, and return it.
-    """
-
-    @GPTEnabled
-    def _function(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
-        """
-        This is a test function.
-
-        :param a: This is a parameter
-        :param b: This is another parameter
-        :param c: This is a boolean parameter
-        :param d: This is a list parameter
-        """
-        return a, b, c, d
-
-    return _function
-
-
 def test_global_configuration_ignore_parameters(global_config):
     # Change the global configuration
     global_config.ignore_parameters = ["b", "c"]
 
-    func = get_locally_defined_function()  # Get function with the updated configuration
-
-    rf = ReferenceSchema(func)
+    rf = ReferenceSchema(function)
     rf.remove_param("b")
     rf.remove_param("c")
-    assert func.schema.to_json() == rf.schema
-    assert func.schema.to_json(SchemaType.TUNE) == rf.tune_schema
-    assert func.tags == []
+    assert function.schema.to_json() == rf.schema
+    assert function.schema.to_json(SchemaType.TUNE) == rf.tune_schema
+    assert function.tags == []
 
 
 def test_global_configuration_ignore_parameter_descriptions(global_config):
     # Change the global configuration
     tool2schema.CONFIG.ignore_parameter_descriptions = True
 
-    func = get_locally_defined_function()  # Get function with the updated configuration
-
-    rf = ReferenceSchema(func)
+    rf = ReferenceSchema(function)
     rf.remove_parameter_descriptions()
 
-    assert func.schema.to_json() == rf.schema
-    assert func.schema.to_json(SchemaType.TUNE) == rf.tune_schema
-    assert func.tags == []
+    assert function.schema.to_json() == rf.schema
+    assert function.schema.to_json(SchemaType.TUNE) == rf.tune_schema
+    assert function.tags == []
 
 
 def test_global_configuration_ignore_function_description(global_config):
     # Change the global configuration
     tool2schema.CONFIG.ignore_function_description = True
 
-    func = get_locally_defined_function()  # Get function with the updated configuration
-
-    rf = ReferenceSchema(func)
+    rf = ReferenceSchema(function)
     rf.get_function().pop("description")
 
-    assert func.schema.to_json() == rf.schema
-    assert func.schema.to_json(SchemaType.TUNE) == rf.tune_schema
-    assert func.tags == []
+    assert function.schema.to_json() == rf.schema
+    assert function.schema.to_json(SchemaType.TUNE) == rf.tune_schema
+    assert function.tags == []
 
 
 def test_global_configuration_ignore_all_parameters(global_config):
     # Change the global configuration
     tool2schema.CONFIG.ignore_all_parameters = True
 
-    func = get_locally_defined_function()  # Get function with the updated configuration
-
-    rf = ReferenceSchema(func)
+    rf = ReferenceSchema(function)
     rf.get_parameters().pop("properties")
     rf.get_parameters().pop("required")
 
-    assert func.schema.to_json() == rf.schema
-    assert func.schema.to_json(SchemaType.TUNE) == rf.tune_schema
-    assert func.tags == []
+    assert function.schema.to_json() == rf.schema
+    assert function.schema.to_json(SchemaType.TUNE) == rf.tune_schema
+    assert function.tags == []
