@@ -131,7 +131,7 @@ class FunctionSchema:
         """
         self.f = f
         self.config = config
-        self.parameter_schemas: dict[str, ParameterSchema] = self._get_parameter_schemas()
+        self._all_parameter_schemas: dict[str, ParameterSchema] = self._get_all_parameter_schemas()
 
     def to_json(self, schema_type: SchemaType = SchemaType.API) -> dict:
         """
@@ -150,8 +150,10 @@ class FunctionSchema:
         :param n: The name of the parameter with the enum values
         :param enum: The list of values for the enum parameter
         """
-        p = self.parameter_schemas[n]
-        self.parameter_schemas[n] = EnumParameterSchema(enum, p.parameter, p.index, p.docstring)
+        p = self._all_parameter_schemas[n]
+        self._all_parameter_schemas[n] = EnumParameterSchema(
+            enum, p.parameter, p.index, self.config, p.docstring
+        )
         return self
 
     def _get_schema(self) -> dict:
@@ -183,12 +185,15 @@ class FunctionSchema:
         """
         schema = {"type": "object"}
 
-        if self.parameter_schemas or schema_type == SchemaType.TUNE:
-            # If the schema type is tune, add the dictionary even if empty
-            schema["properties"] = self._get_parameter_properties_schema()
+        if not self.parameter_schemas and schema_type == SchemaType.API:
+            # Skip properties
+            return schema
 
-            if required := self._get_required_parameters():
-                schema["required"] = required
+        # If the schema type is tune, add the dictionary even if empty
+        schema["properties"] = self._get_parameter_properties_schema()
+
+        if required := self._get_required_parameters():
+            schema["required"] = required
 
         return schema
 
@@ -203,10 +208,10 @@ class FunctionSchema:
 
         return schema
 
-    def _get_parameter_schemas(self) -> dict[str, ParameterSchema]:
+    def _get_all_parameter_schemas(self) -> dict[str, ParameterSchema]:
         """
-        Get a dictionary of parameter schemas for the function.
-        Ignored parameters are not included in the dictionary.
+        Get a dictionary of all parameter schemas for the function
+        (including ignored parameters).
 
         :return: A dictionary with parameter names as keys and
             parameter schemas as values
@@ -214,12 +219,9 @@ class FunctionSchema:
         parameters = dict()
 
         for i, (n, o) in enumerate(inspect.signature(self.f).parameters.items()):
-            if n in self.config.ignore_parameters:
-                continue  # Skip ignored parameter
-
             for Param in PARAMETER_SCHEMAS:
                 if Param.matches(o):
-                    parameters[n] = Param(o, i, self.f.__doc__)
+                    parameters[n] = Param(o, i, self.config, self.f.__doc__)
                     break
 
         return parameters
@@ -230,14 +232,14 @@ class FunctionSchema:
 
         :return: The function description, or None if not present
         """
-        if docstring := self.f.__doc__:  # Check if docstring exists
-            docstring = " ".join([x.strip() for x in docstring.replace("\n", " ").split()])
-            if desc := re.findall(r"(.*?):param", docstring):
-                return desc[0].strip()
+        if not (docstring := self.f.__doc__) or self.config.ignore_function_description:
+            return None
 
-            return docstring.strip()
+        docstring = " ".join([x.strip() for x in docstring.replace("\n", " ").split()])
+        if desc := re.findall(r"(.*?):param", docstring):
+            return desc[0].strip()
 
-        return None
+        return docstring.strip()
 
     def _get_required_parameters(self) -> list[str]:
         """
@@ -251,3 +253,22 @@ class FunctionSchema:
                 req_params.append(n)
 
         return req_params
+
+    @property
+    def parameter_schemas(self):
+        """
+        Return a dictionary of parameter schemas, where keys are parameter names
+        and values are instances of `ParameterSchema`. Ignored parameters are not
+        included in the dictionary.
+
+        :return: A dictionary of parameter schemas
+        """
+        return (
+            {}
+            if self.config.ignore_all_parameters
+            else {
+                k: v
+                for k, v in self._all_parameter_schemas.items()
+                if k not in self.config.ignore_parameters
+            }
+        )

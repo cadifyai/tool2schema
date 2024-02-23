@@ -206,8 +206,8 @@ my_function.has_tag("tag1")  # True
 
 ### Disable parts of the schema
 
-You can provide `GPTEnabled` with a list of parameters to ignore, which will be omitted from the schema.
-For example:
+You can provide `GPTEnabled` with a number of settings to selectively disable parts of the schema.
+For example, to omit certain parameters:
 
 ```python
 @GPTEnabled(ignore_parameters=["b", "c"])  # b and c will not be included in the schema
@@ -215,7 +215,17 @@ def my_function(a: int, b: str, c: float):
     # Function code here...
 ```
 
-It is also possible to specify a value for `ignore_parameters` which will be used for all decorated functions
+The available settings are:
+- `ignore_parameters`: A list of parameter names to exclude from the schema (defaults to `[]`).
+- `ignore_all_parameters`: A boolean value indicating whether to exclude all parameters from the schema
+  (defaults to `False`). When set to true, all other parameter-related settings (`ignore_parameters` and 
+  `ignore_parameter_descriptions`) will be ignored.
+- `ignore_function_description`: A boolean value indicating whether to exclude the function description from 
+  the schema (defaults to `False`).
+- `ignore_parameter_descriptions`: A boolean value indicating whether to exclude all parameter descriptions
+  from the schema (defaults to `False`).
+
+It is also possible to specify the settings globally, so that they apply to all functions
 unless explicitly overridden. It can be done by editing the global configuration as follows:
 
 ```python

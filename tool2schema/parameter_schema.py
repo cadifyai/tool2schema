@@ -4,6 +4,8 @@ from enum import Enum
 from inspect import Parameter, isclass
 from typing import Union
 
+from tool2schema import Config
+
 TYPE_MAP = {
     "int": "integer",
     "float": "number",
@@ -19,7 +21,7 @@ class ParameterSchema:
     inspect.Parameter and a function documentation string.
     """
 
-    def __init__(self, parameter: Parameter, index: int, docstring: str = None):
+    def __init__(self, parameter: Parameter, index: int, config: Config, docstring: str = None):
         """
         Create a new parameter schema.
 
@@ -29,6 +31,7 @@ class ParameterSchema:
         """
         self.parameter: Parameter = parameter
         self.index: int = index
+        self.config: Config = config
         self.docstring: str = docstring
 
     @staticmethod
@@ -67,7 +70,7 @@ class ParameterSchema:
         to be added to the JSON schema. Return `Parameter.empty` to omit the description
         from the schema.
         """
-        if self.docstring is None:
+        if self.docstring is None or self.config.ignore_parameter_descriptions:
             return Parameter.empty
 
         docstring = " ".join([x.strip() for x in self.docstring.replace("\n", " ").split()])
@@ -199,8 +202,10 @@ class EnumParameterSchema(ParameterSchema):
     Parameter schema for enumeration types.
     """
 
-    def __init__(self, values: list, parameter: Parameter, index: int, docstring: str = None):
-        super().__init__(parameter, index, docstring)
+    def __init__(
+        self, values: list, parameter: Parameter, index: int, config: Config, docstring: str = None
+    ):
+        super().__init__(parameter, index, config, docstring)
         self.enum_values = values
 
     def _get_type(self) -> Union[str, Parameter.empty]:
@@ -215,9 +220,9 @@ class EnumTypeParameterSchema(EnumParameterSchema):
     Parameter schema for enum.Enum types.
     """
 
-    def __init__(self, parameter: Parameter, index: int, docstring: str = None):
+    def __init__(self, parameter: Parameter, index: int, config: Config, docstring: str = None):
         values = [e.name for e in parameter.annotation]
-        super().__init__(values, parameter, index, docstring)
+        super().__init__(values, parameter, index, config, docstring)
 
     @staticmethod
     def matches(parameter: Parameter) -> bool:
@@ -254,9 +259,9 @@ class LiteralTypeParameterSchema(EnumParameterSchema):
     Parameter schema for typing.Literal types.
     """
 
-    def __init__(self, parameter: Parameter, index: int, docstring: str = None):
+    def __init__(self, parameter: Parameter, index: int, config: Config, docstring: str = None):
         values = list(typing.get_args(parameter.annotation))
-        super().__init__(values, parameter, index, docstring)
+        super().__init__(values, parameter, index, config, docstring)
 
     @staticmethod
     def matches(parameter: Parameter) -> bool:
