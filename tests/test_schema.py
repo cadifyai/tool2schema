@@ -914,3 +914,30 @@ def test_global_configuration_ignore_all_parameters_tune(global_config):
 
     assert function.schema.to_json(SchemaType.TUNE) == rf.tune_schema
     assert function.tags == []
+
+
+########################################
+#  Test global configuration override  #
+########################################
+
+
+@GPTEnabled(ignore_all_parameters=False)
+def function_ignore_all_parameters_override(
+    a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]
+):
+    """
+    This is a test function.
+
+    :param a: This is a parameter
+    :param b: This is another parameter
+    :param c: This is a boolean parameter
+    :param d: This is a list parameter
+    """
+    return a, b, c, d
+
+
+def test_function_ignore_all_parameters_override(global_config):
+    # Verify that the function schema is not affected by the global configuration
+    global_config.ignore_all_parameters = True
+    rf = ReferenceSchema(function_ignore_all_parameters_override)
+    assert function_ignore_all_parameters_override.schema.to_json() == rf.schema
