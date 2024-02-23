@@ -11,7 +11,7 @@ jobs:
       contents: write
     steps:
       - name: Publish PyPi package
-        uses: cadifyai/poetry-publish@v0.1.0
+        uses: cadifyai/poetry-publish@v0.1.1
         with:
           ACCESS_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
           PUBLISH_REGISTRY_USERNAME: "__token__"
