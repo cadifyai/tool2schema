@@ -185,11 +185,7 @@ class FunctionSchema:
         """
         schema = {"type": "object"}
 
-        if (
-            not self.parameter_schemas
-            and schema_type == SchemaType.API
-            or self.config.ignore_all_parameters
-        ):
+        if not self.parameter_schemas and schema_type == SchemaType.API:
             # Skip properties
             return schema
 
@@ -208,8 +204,7 @@ class FunctionSchema:
         schema = dict()
 
         for n, p in self.parameter_schemas.items():
-            if n not in self.config.ignore_parameters:
-                schema[n] = p.to_json()
+            schema[n] = p.to_json()
 
         return schema
 
@@ -268,8 +263,12 @@ class FunctionSchema:
 
         :return: A dictionary of parameter schemas
         """
-        return {
-            k: v
-            for k, v in self._all_parameter_schemas.items()
-            if k not in self.config.ignore_parameters
-        }
+        return (
+            {}
+            if self.config.ignore_all_parameters
+            else {
+                k: v
+                for k, v in self._all_parameter_schemas.items()
+                if k not in self.config.ignore_parameters
+            }
+        )

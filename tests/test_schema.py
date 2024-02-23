@@ -832,9 +832,14 @@ def function_ignore_all_parameters(a: int, b: str, c: bool = False, d: list[int]
 
 def test_function_ignore_all_parameters():
     rf = ReferenceSchema(function_ignore_all_parameters)
-    rf.get_parameters().pop("properties")
-    rf.get_parameters().pop("required")
+    rf.get_function().pop("parameters")
     assert function_ignore_all_parameters.schema.to_json() == rf.schema
+
+
+def test_function_ignore_all_parameters_tune():
+    rf = ReferenceSchema(function_ignore_all_parameters)
+    rf.get_parameters().pop("required")
+    rf.get_parameters()["properties"] = {}
     assert function_ignore_all_parameters.schema.to_json(SchemaType.TUNE) == rf.tune_schema
     assert function_ignore_all_parameters.tags == []
 
@@ -893,9 +898,19 @@ def test_global_configuration_ignore_all_parameters(global_config):
     tool2schema.CONFIG.ignore_all_parameters = True
 
     rf = ReferenceSchema(function)
-    rf.get_parameters().pop("properties")
-    rf.get_parameters().pop("required")
+    rf.get_function().pop("parameters")
 
     assert function.schema.to_json() == rf.schema
+    assert function.tags == []
+
+
+def test_global_configuration_ignore_all_parameters_tune(global_config):
+    # Change the global configuration
+    tool2schema.CONFIG.ignore_all_parameters = True
+
+    rf = ReferenceSchema(function)
+    rf.get_parameters().pop("required")
+    rf.get_parameters()["properties"] = {}
+
     assert function.schema.to_json(SchemaType.TUNE) == rf.tune_schema
     assert function.tags == []
