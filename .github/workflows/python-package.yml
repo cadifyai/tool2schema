@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# required by sticky-pull-request-comment
+permissions:
+  pull-requests: write
+
 jobs:
   linting:
     runs-on: ubuntu-latest
@@ -73,6 +77,7 @@ jobs:
         with:
           filename: coverage.xml
           format: markdown
+          output: both # console and .md file
           badge: true
       #----------------------------------------------
       #      add coverage report to PR comment
