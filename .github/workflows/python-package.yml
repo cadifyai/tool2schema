@@ -80,6 +80,12 @@ jobs:
           output: both # console and .md file
           badge: true
       #----------------------------------------------
+      #            write job summary
+      #----------------------------------------------
+      - name: Write job summary
+        run: |
+          cat code-coverage-results.md >> $GITHUB_STEP_SUMMARY
+      #----------------------------------------------
       #      add coverage report to PR comment
       #----------------------------------------------
       - name: Add Coverage PR Comment
