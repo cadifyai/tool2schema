@@ -7,6 +7,9 @@ profile = "black"
 src_paths = ["tool2schema", "tests"]
 line_length = 100
 
+[tool.coverage.run]
+source = ["tool2schema"]
+
 [tool.poetry]
 name = "tool2schema"
 version = "v1.0.0"
