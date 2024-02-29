@@ -10,8 +10,8 @@ from tool2schema.type_schema import EnumTypeSchema, TypeSchema
 
 class ParameterSchema:
     """
-    Automatically create a parameter schema given an instance of
-    inspect.Parameter and a function documentation string.
+    Automatically create a parameter schema given an instance of inspect.Parameter
+    and a function documentation string.
     """
 
     def __init__(
@@ -28,6 +28,7 @@ class ParameterSchema:
         :param type_schema: The type schema for the parameter (use `TypeSchema.create`)
         :param parameter: The parameter to create a schema for
         :param index: The index of the parameter in the function signature
+        :param config: Configuration settings to use when creating the schema
         :param docstring: The docstring for the function containing the parameter
         """
         self.type_schema = type_schema
@@ -43,6 +44,10 @@ class ParameterSchema:
         """
         Create a new parameter schema for the specified parameter.
 
+        :param parameter: The parameter to create a schema for
+        :param index: The index of the parameter in the function signature
+        :param docstring: The docstring for the function containing the parameter
+        :param config: Configuration settings to use when creating the schema
         :return: An instance of `ParameterSchema`, or None if the parameter type is not supported.
         """
         if type_schema := TypeSchema.create(parameter.annotation):
