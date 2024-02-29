@@ -77,14 +77,14 @@ class TypeSchema:
         """
         return Parameter.empty
 
-    def _get_items(self) -> Union[str, Parameter.empty]:
+    def _get_items(self) -> Union[dict, Parameter.empty]:
         """
         Get the items property to be added to the JSON schema.
         Return `Parameter.empty` to omit the items from the schema.
         """
         return Parameter.empty
 
-    def _get_enum(self) -> Union[list[str], Parameter.empty]:
+    def _get_enum(self) -> Union[list, Parameter.empty]:
         """
         Get the enum property to be added to the JSON schema.
         Return `Parameter.empty` to omit the enum from the schema.
@@ -144,13 +144,13 @@ class ListTypeSchema(GenericTypeSchema):
     """
 
     @staticmethod
-    def matches(p_type):
+    def matches(p_type: Type) -> bool:
         return p_type != Parameter.empty and (p_type is list or typing.get_origin(p_type) is list)
 
     def _get_type(self) -> Union[str, Parameter.empty]:
         return "array"
 
-    def _get_items(self) -> Union[str, Parameter.empty]:
+    def _get_items(self) -> Union[dict, Parameter.empty]:
         if (sub_type := self._get_sub_type()) != Parameter.empty:
             return sub_type.to_json()
 
@@ -188,7 +188,7 @@ class OptionalTypeSchema(GenericTypeSchema):
     def _get_type(self) -> Union[str, Parameter.empty]:
         return super()._get_sub_type()._get_type()
 
-    def _get_enum(self) -> Union[str, Parameter.empty]:
+    def _get_enum(self) -> Union[list, Parameter.empty]:
         return super()._get_sub_type()._get_enum()
 
     def encode(self, value):
@@ -216,7 +216,7 @@ class EnumTypeSchema(TypeSchema):
     def _get_type(self) -> Union[str, Parameter.empty]:
         return TypeSchema.create(type(self.enum_values[0]))._get_type()
 
-    def _get_enum(self) -> Union[list[str], Parameter.empty]:
+    def _get_enum(self) -> Union[list, Parameter.empty]:
         return self.enum_values
 
 
@@ -230,7 +230,7 @@ class EnumClassTypeSchema(EnumTypeSchema):
         super().__init__([e.name for e in p_type], p_type)
 
     @staticmethod
-    def matches(type_p) -> bool:
+    def matches(type_p: Type) -> bool:
         return type_p != Parameter.empty and isclass(type_p) and issubclass(type_p, Enum)
 
     def encode(self, value):
