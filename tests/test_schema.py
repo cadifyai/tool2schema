@@ -788,7 +788,7 @@ def function_custom_enum_list(
     a: int,
     b: str,
     c: bool = False,
-    d: list[CustomEnum] = [CustomEnum.A, CustomEnum.B, CustomEnum.C],
+    d: list[CustomEnum] = [CustomEnum.A, CustomEnum.B],
 ):
     """
     This is a test function.
@@ -804,8 +804,8 @@ def function_custom_enum_list(
 def test_function_custom_enum_list():
     rf = ReferenceSchema(function_custom_enum_list)
     b = rf.get_param("d")
-    b["default"] = ["A", "B", "C"]
-    b["items"]["type"] = "string"
+    b["default"] = ["A", "B"]
+    b["items"] = {"type": "string", "enum": ["A", "B", "C"]}
 
     assert function_custom_enum_list.schema.to_json() == rf.schema
     assert function_custom_enum_list.tags == []

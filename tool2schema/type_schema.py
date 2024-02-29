@@ -29,9 +29,11 @@ class TypeSchema:
         self.type: Optional[Type] = p_type
 
     @staticmethod
-    def create(p_type) -> Optional[TypeSchema]:
+    def create(p_type: Type) -> Optional[TypeSchema]:
         """
         Create a new schema for the given type.
+
+        :return: An instance of `TypeSchema`, or None if the type is not supported.
         """
         for schema in TYPE_SCHEMAS:
             if schema.matches(p_type):
@@ -150,7 +152,7 @@ class ListTypeSchema(GenericTypeSchema):
 
     def _get_items(self) -> Union[str, Parameter.empty]:
         if (sub_type := self._get_sub_type()) != Parameter.empty:
-            return {"type": sub_type._get_type()}
+            return sub_type.to_json()
 
         return Parameter.empty
 
