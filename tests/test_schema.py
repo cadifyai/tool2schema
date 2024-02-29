@@ -98,6 +98,17 @@ def test_FindGPTEnabledByTag():
     assert functions.function not in FindGPTEnabledByTag(functions, "test")
 
 
+############################################
+#  Custom enum class for testing purposes  #
+############################################
+
+
+class CustomEnum(Enum):
+    A = 1
+    B = 2
+    C = 3
+
+
 ##################################
 #  ReferenceSchema helper class  #
 ##################################
@@ -486,6 +497,53 @@ def test_function_optional():
     assert function_optional.tags == []
 
 
+@GPTEnabled
+def function_optional_enum(a: int, b: str, c: bool = False, d: Optional[CustomEnum] = None):
+    """
+    This is a test function.
+
+    :param a: This is a parameter
+    :param b: This is another parameter
+    :param c: This is a boolean parameter
+    :param d: This is an optional parameter
+    """
+    return a, b, c, d
+
+
+def test_function_optional_enum():
+    rf = ReferenceSchema(function_optional_enum)
+    rf.set_param(
+        "d",
+        {
+            "description": "This is an optional parameter",
+            "type": "string",
+            "default": None,
+            "enum": [x.name for x in CustomEnum],
+        },
+    )
+
+    assert function_optional_enum.schema.to_json() == rf.schema
+    assert function_optional_enum.tags == []
+
+    # Verify it is possible to invoke the function with the parsed value
+    _, _, _, d = function_optional_enum(1, "", False, "A")
+    assert d == CustomEnum.A
+
+    _, _, _, d = function_optional_enum(1, "", False, d="A")
+    assert d == CustomEnum.A
+
+    # Verify it is possible to invoke the function with the Enum instance
+    _, _, _, d = function_optional_enum(1, "", False, CustomEnum.A)
+    assert d == CustomEnum.A
+
+    _, _, _, d = function_optional_enum(1, "", False, d=CustomEnum.A)
+    assert d == CustomEnum.A
+
+    # Verify it is possible to invoke the function with None
+    _, _, _, d = function_optional_enum(1, "", False, d=None)
+    assert d is None
+
+
 ##################################################
 #  Example function with typing.List annotation  #
 ##################################################
@@ -660,12 +718,6 @@ def test_function_typing_literal_string():
 #################################################
 
 
-class CustomEnum(Enum):
-    A = 1
-    B = 2
-    C = 3
-
-
 @GPTEnabled
 def function_custom_enum(a: CustomEnum, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
@@ -729,6 +781,50 @@ def test_function_custom_enum_default_value():
     b["enum"] = [x.name for x in CustomEnum]
     assert function_custom_enum_default_value.schema.to_json() == rf.schema
     assert function_custom_enum_default_value.tags == []
+
+
+@GPTEnabled
+def function_custom_enum_list(
+    a: int,
+    b: str,
+    c: bool = False,
+    d: list[CustomEnum] = [CustomEnum.A, CustomEnum.B, CustomEnum.C],
+):
+    """
+    This is a test function.
+
+    :param a: This is a parameter
+    :param b: This is another parameter
+    :param c: This is a boolean parameter
+    :param d: This is a list parameter
+    """
+    return a, b, c, d
+
+
+def test_function_custom_enum_list():
+    rf = ReferenceSchema(function_custom_enum_list)
+    b = rf.get_param("d")
+    b["default"] = ["A", "B", "C"]
+    b["items"]["type"] = "string"
+
+    assert function_custom_enum_list.schema.to_json() == rf.schema
+    assert function_custom_enum_list.tags == []
+
+    # Verify we can invoke the function providing the encoded enum value
+    _, _, _, d = function_custom_enum_list(1, "", False, ["A"])
+    assert d == [CustomEnum.A]
+
+    # Verify it works with keyword arguments as well
+    _, _, _, d = function_custom_enum_list(1, "", False, d=["A"])
+    assert d == [CustomEnum.A]
+
+    # Verify we can invoke the function providing the enum instance
+    _, _, _, d = function_custom_enum_list(1, "", False, [CustomEnum.A])
+    assert d == [CustomEnum.A]
+
+    # Verify it works with keyword arguments as well
+    _, _, _, d = function_custom_enum_list(1, "", False, d=[CustomEnum.A])
+    assert d == [CustomEnum.A]
 
 
 ###########################

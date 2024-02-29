@@ -9,7 +9,7 @@ from typing import Callable, Optional
 
 import tool2schema
 from tool2schema.config import Config
-from tool2schema.parameter_schema import PARAMETER_SCHEMAS, EnumParameterSchema, ParameterSchema
+from tool2schema.parameter_schema import EnumParameterSchema, ParameterSchema
 
 
 class SchemaType(Enum):
@@ -91,12 +91,12 @@ class _GPTEnabled:
             for p in self.schema.parameter_schemas.values():
                 if p.index == i:
                     # Convert the JSON value to the type expected by the method
-                    args[i] = p.decode_value(arg)
+                    args[i] = p.type_schema.decode(arg)
 
         for key in kwargs:
             if key in self.schema.parameter_schemas:
                 # Convert the JSON value to the type expected by the method
-                kwargs[key] = self.schema.parameter_schemas[key].decode_value(kwargs[key])
+                kwargs[key] = self.schema.parameter_schemas[key].type_schema.decode(kwargs[key])
 
         return self.func(*args, **kwargs)
 
@@ -219,10 +219,8 @@ class FunctionSchema:
         parameters = dict()
 
         for i, (n, o) in enumerate(inspect.signature(self.f).parameters.items()):
-            for Param in PARAMETER_SCHEMAS:
-                if Param.matches(o):
-                    parameters[n] = Param(o, i, self.config, self.f.__doc__)
-                    break
+            if schema := ParameterSchema.create(o, i, self.config, self.f.__doc__):
+                parameters[n] = schema
 
         return parameters
 
