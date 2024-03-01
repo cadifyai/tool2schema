@@ -171,7 +171,7 @@ class FunctionSchema:
 
         if self.parameter_schemas or schema_type == SchemaType.TUNE:
             # If the schema type is tune, add the dictionary even if there are no parameters
-            schema["parameters"] = self._get_parameters_schema(schema_type)
+            schema["parameters"] = self._get_parameters_schema()
 
         if (description := self._get_description()) is not None:
             # Add the function description even if it is an empty string
@@ -179,18 +179,11 @@ class FunctionSchema:
 
         return schema
 
-    def _get_parameters_schema(self, schema_type: SchemaType) -> dict:
+    def _get_parameters_schema(self) -> dict:
         """
         Get the parameters schema dictionary.
         """
-        schema = {"type": "object"}
-
-        if not self.parameter_schemas and schema_type == SchemaType.API:
-            # Skip properties
-            return schema
-
-        # If the schema type is tune, add the dictionary even if empty
-        schema["properties"] = self._get_parameter_properties_schema()
+        schema = {"type": "object", "properties": self._get_parameter_properties_schema()}
 
         if required := self._get_required_parameters():
             schema["required"] = required

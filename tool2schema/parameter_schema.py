@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from inspect import Parameter
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 from tool2schema import Config
 from tool2schema.type_schema import EnumTypeSchema, TypeSchema
@@ -20,7 +20,7 @@ class ParameterSchema:
         parameter: Parameter,
         index: int,
         config: Config,
-        docstring: str = None,
+        docstring: Optional[str] = None,
     ):
         """
         Create a new parameter schema.
@@ -32,22 +32,22 @@ class ParameterSchema:
         :param docstring: The docstring for the function containing the parameter
         """
         self.type_schema = type_schema
-        self.parameter: Parameter = parameter
-        self.index: int = index
-        self.config: Config = config
-        self.docstring: str = docstring
+        self.parameter = parameter
+        self.index = index
+        self.config = config
+        self.docstring = docstring
 
     @staticmethod
     def create(
-        parameter: Parameter, index: int, config: Config, docstring: str = None
+        parameter: Parameter, index: int, config: Config, docstring: Optional[str] = None
     ) -> Optional[ParameterSchema]:
         """
         Create a new parameter schema for the specified parameter.
 
         :param parameter: The parameter to create a schema for
         :param index: The index of the parameter in the function signature
-        :param docstring: The docstring for the function containing the parameter
         :param config: Configuration settings to use when creating the schema
+        :param docstring: The docstring for the function containing the parameter
         :return: An instance of `ParameterSchema`, or None if the parameter type is not supported.
         """
         if type_schema := TypeSchema.create(parameter.annotation):
@@ -70,7 +70,7 @@ class ParameterSchema:
 
         return Parameter.empty
 
-    def _get_default(self) -> any:
+    def _get_default(self) -> Any:
         """
         Get the default value for this parameter, when present, to be added to the JSON schema.
         Return `Parameter.empty` to omit the default value from the schema.

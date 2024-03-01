@@ -7,10 +7,10 @@ from typing import Literal, Optional, Type, Union
 
 # Order matters: specific classes should appear before more generic ones,
 # because the first matching schema will be used
-TYPE_SCHEMAS = []
+TYPE_SCHEMAS: list[Type[TypeSchema]] = []
 
 
-def GPTTypeSchema(cls):
+def GPTTypeSchema(cls: Type[TypeSchema]):
     """
     Decorator to register a type schema class.
     """
@@ -26,7 +26,7 @@ class TypeSchema:
     def __init__(self, p_type: Optional[Type] = None):
         # The type can be none if the type was created manually, for example
         # via the add_enum method which creates an instance of EnumTypeSchema
-        self.type: Optional[Type] = p_type
+        self.type = p_type
 
     @staticmethod
     def create(p_type: Type) -> Optional[TypeSchema]:

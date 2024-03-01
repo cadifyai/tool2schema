@@ -826,6 +826,10 @@ def test_function_custom_enum_list():
     _, _, _, d = function_custom_enum_list(1, "", False, d=[CustomEnum.A])
     assert d == [CustomEnum.A]
 
+    # Verify it works with keyword an empty list
+    _, _, _, d = function_custom_enum_list(1, "", False, d=[])
+    assert d == []
+
 
 ###########################
 #  Test ignore_parameters #
