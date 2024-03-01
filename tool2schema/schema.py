@@ -9,7 +9,7 @@ from typing import Callable, Optional
 
 import tool2schema
 from tool2schema.config import Config
-from tool2schema.parameter_schema import EnumParameterSchema, ParameterSchema
+from tool2schema.parameter_schema import ParameterSchema
 
 
 class SchemaType(Enum):
@@ -150,10 +150,7 @@ class FunctionSchema:
         :param n: The name of the parameter with the enum values
         :param enum: The list of values for the enum parameter
         """
-        p = self._all_parameter_schemas[n]
-        self._all_parameter_schemas[n] = EnumParameterSchema(
-            enum, p.parameter, p.index, self.config, p.docstring
-        )
+        self._all_parameter_schemas[n].add_enum(enum)
         return self
 
     def _get_schema(self) -> dict:

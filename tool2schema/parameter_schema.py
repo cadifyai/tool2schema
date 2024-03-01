@@ -82,6 +82,14 @@ class ParameterSchema:
         # Parameter.empty to indicate that the default value is not present
         return Parameter.empty
 
+    def add_enum(self, values: list) -> None:
+        """
+        Convert this parameter to an enumeration type.
+
+        :param values: List of unique enumeration values.
+        """
+        self.type_schema = EnumTypeSchema(values)
+
     def to_json(self) -> dict:
         """
         Return the json schema for this parameter.
@@ -95,14 +103,3 @@ class ParameterSchema:
         json = {f: v for f, v in fields.items() if v != Parameter.empty}
 
         return json
-
-
-class EnumParameterSchema(ParameterSchema):
-    """
-    Parameter schema for enumeration types manually added via add_enum.
-    """
-
-    def __init__(
-        self, values: list, parameter: Parameter, index: int, config: Config, docstring: str = None
-    ):
-        super().__init__(EnumTypeSchema(values), parameter, index, config, docstring)
