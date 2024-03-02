@@ -489,7 +489,7 @@ def test_function_optional():
         "d",
         {
             "description": "This is an optional parameter",
-            "type": "integer",
+            "anyOf": [{"type": "integer"}, {"type": "null"}],
             "default": None,
         },
     )
@@ -516,9 +516,8 @@ def test_function_optional_enum():
         "d",
         {
             "description": "This is an optional parameter",
-            "type": "string",
             "default": None,
-            "enum": [x.name for x in CustomEnum],
+            "anyOf": [{"enum": ["A", "B", "C"], "type": "string"}, {"type": "null"}],
         },
     )
 
