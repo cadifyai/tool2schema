@@ -63,15 +63,24 @@ def test_union_encode_decode_enum():
     assert type_schema.decode("YES") == CustomEnum.YES
 
 
-def test_list_encode_decode_enum():
+@pytest.mark.parametrize(
+    "array",
+    [
+        [CustomEnum.YES],
+        [CustomEnum.YES, CustomEnum.MAYBE],
+        [CustomEnum.YES, CustomEnum.MAYBE, CustomEnum.NO],
+    ],
+)
+def test_list_encode_decode_enum(array):
     type_schema = TypeSchema.create(List[CustomEnum])
 
     adapter = TypeAdapter(List[Literal["YES", "NO", "MAYBE"]])
     assert type_schema.to_json() == adapter.json_schema()
 
-    assert type_schema.encode([CustomEnum.YES]) == ["YES"]
-    assert type_schema.decode([CustomEnum.YES]) == [CustomEnum.YES]
-    assert type_schema.decode(["YES"]) == [CustomEnum.YES]
+    encoding = [e.name for e in array]
+    assert type_schema.encode(array) == encoding
+    assert type_schema.decode(array) == array
+    assert type_schema.decode(encoding) == array
 
 
 @pytest.mark.parametrize(
