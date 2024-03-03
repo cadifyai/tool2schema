@@ -9,7 +9,7 @@ line_length = 100
 
 [tool.poetry]
 name = "tool2schema"
-version = "v1.1.0"
+version = "v1.2.0"
 description = "A library to generate function schemas for use in the OpenAI API."
 authors = ["Angus Stewart <siliconlad@protonmail.com>"]
 license = "Apache-2.0"
