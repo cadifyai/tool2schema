@@ -75,24 +75,48 @@ def SaveGPTEnabled(module: ModuleType, path: str, schema_type: SchemaType = Sche
     json.dump(schemas, open(path, "w"))
 
 
-def ParseSchema(module: ModuleType, schema: dict) -> Optional[Callable]:
+class ParseException(Exception):
+    """Exception for schema parsing errors."""
+
+    pass
+
+
+def ParseSchema(module: ModuleType, schema: dict, validate: bool = True) -> Optional[Callable]:
     """
     Given a schema, return the corresponding function from the module. The function
-    has to be decorated with `GPTEnabled` for this method to retrieve it.
-    :param module: The module where the function is defined.
-    :param schema: The schema corresponding to the function.
-    :return: The function corresponding to the schema, or None if the function is not found.
+    has to be decorated with `GPTEnabled` for this method to retrieve it. If a function is
+    found, the provided schema is validated against the expected one if `validate` is True.
+    If the validation fail, a `ParseException` is raised.
+
+    :param module: The module where the function is defined
+    :param schema: The schema corresponding to the function
+    :param validate: Whether to validate the provided schema against the function's expected schema
+    :return: The function corresponding to the schema, or None if the function is not found
+    :raises ParseException: If the schema is invalid or does not match the expected one
     """
 
     if not (function := schema.get("function", None)):
-        return None
+        raise ParseException("Schema does not contain a function")
 
     if not (name := function.get("name", None)):
-        return None
+        raise ParseException("Function name is missing from the schema")
+
+    parameters = function.get("parameters", {})
+    parameters = parameters.get("properties", {})
 
     for func in FindGPTEnabled(module):
-        if func.__name__ == name:
-            return func
+        if func.__name__ != name:
+            continue
+
+        if validate:
+            for key, param in func.schema.parameter_schemas.items():
+                if key not in parameters:
+                    raise ParseException(f"Parameter {key} is missing from the schema")
+
+                if param.to_json() != parameters[key]:
+                    raise ParseException(f"Parameter {key} does not match the expected schema")
+
+        return func
 
     return None
 
