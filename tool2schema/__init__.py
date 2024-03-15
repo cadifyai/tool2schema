@@ -2,13 +2,13 @@
 __version__ = "v1.2.0"
 
 from .config import Config
-from .parse import ParseSchema
 from .schema import (
     FindGPTEnabled,
     FindGPTEnabledByName,
     FindGPTEnabledByTag,
     FindGPTEnabledSchemas,
     GPTEnabled,
+    ParseSchema,
     SaveGPTEnabled,
     SchemaType,
 )
