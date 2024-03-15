@@ -12,5 +12,5 @@ from tool2schema import ParseSchema
     "function",
     [functions.function, functions.function_no_params, functions.function_tags],
 )
-def test_union_encode_decode_enum(function):
+def test_parse_schema(function):
     assert ParseSchema(functions, function.schema.to_json()) == function
