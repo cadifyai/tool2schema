@@ -81,44 +81,66 @@ class ParseException(Exception):
     pass
 
 
-def ParseSchema(module: ModuleType, schema: dict, validate: bool = True) -> Optional[Callable]:
+def ParseSchema(module: ModuleType, function, validate: bool = True) -> Optional[Callable]:
     """
-    Given a schema, return the corresponding function from the module. The function
-    has to be decorated with `GPTEnabled` for this method to retrieve it. If a function is
-    found, the provided schema is validated against the expected one if `validate` is True.
-    If the validation fail, a `ParseException` is raised.
+    Given a function object (`openai.types.chat.chat_completion_message_tool_call.Function`)
+    retrieve the corresponding function among those with the `GPTEnabled` decorator defined in
+    `module`. When `validate` is true, validate the arguments string and raise `ParseException`
+    if the arguments are not valid and cannot be used to invoke the function.
 
     :param module: The module where the function is defined
-    :param schema: The schema corresponding to the function
-    :param validate: Whether to validate the provided schema against the function's expected schema
-    :return: The function corresponding to the schema, or None if the function is not found
-    :raises ParseException: If the schema is invalid or does not match the expected one
+    :param function: An instance of OpenAI Function model
+    :param validate: Whether to validate the function arguments
+    :return: The function defined in `module`, or None if no function with the expected name
+        and the `GPTEnabled` decorator is found
+    :raises ParseException: If the argument string is not valid, meaning it is not parsable as JSON,
+        it can be parsed but is not a dictionary, it does not include all required arguments, it
+        includes values that are not of the expected type, or it contains hallucinated arguments
     """
 
-    if not (function := schema.get("function", None)):
-        raise ParseException("Schema does not contain a function")
+    arguments = None
 
-    if not (name := function.get("name", None)):
-        raise ParseException("Function name is missing from the schema")
+    if validate:
+        try:
+            arguments = json.loads(function.arguments)
 
-    parameters = function.get("parameters", {})
-    parameters = parameters.get("properties", {})
+        except json.decoder.JSONDecodeError:
+            raise ParseException("Arguments are not in valid JSON format")
 
-    for func in FindGPTEnabled(module):
-        if func.__name__ != name:
-            continue
+        if type(arguments) is not dict:
+            raise ParseException("Arguments are not in the form of a dictionary")
 
-        if validate:
-            for key, param in func.schema.parameter_schemas.items():
-                if key not in parameters:
-                    raise ParseException(f"Parameter {key} is missing from the schema")
+    f = FindGPTEnabledByName(module, function.name)
 
-                if param.to_json() != parameters[key]:
-                    raise ParseException(f"Parameter {key} does not match the expected schema")
+    if f and validate:
+        _validate_arguments(f, arguments)
 
-        return func
+    return f
 
-    return None
+
+def _validate_arguments(f: Callable, arguments: dict) -> None:
+    """
+    Verify that all arguments are present, there are no hallucinated arguments, and the
+    arguments are of the expected type. Raise an exception if any of these conditions is not met.
+
+    :param f: A GPTEnabled-decorated function
+    :param arguments: Arguments to validate
+    """
+    for key, param in f.schema.parameter_schemas.items():
+        value = arguments.pop(key, param.parameter.default)
+
+        if value == Parameter.empty:
+            # The parameter is missing from the arguments and does not have a default value
+            raise ParseException(
+                f"Parameter {key} is missing from the arguments and does not have a default value"
+            )
+
+        if not param.type_schema.validate(value):
+            param.type_schema.validate(value)
+            raise ParseException(f"Argument {key} cannot accept value {value}.")
+
+    if arguments:
+        raise ParseException(f"Hallucinated argument: {arguments}")
 
 
 class _GPTEnabled:
@@ -289,7 +311,7 @@ class FunctionSchema:
         return req_params
 
     @property
-    def parameter_schemas(self):
+    def parameter_schemas(self) -> dict[str, ParameterSchema]:
         """
         Return a dictionary of parameter schemas, where keys are parameter names
         and values are instances of `ParameterSchema`. Ignored parameters are not
