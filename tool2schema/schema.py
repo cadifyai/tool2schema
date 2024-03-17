@@ -136,7 +136,6 @@ def _validate_arguments(f: Callable, arguments: dict) -> None:
             )
 
         if not param.type_schema.validate(value):
-            param.type_schema.validate(value)
             raise ParseException(f"Argument {key} cannot accept value {value}.")
 
     if arguments:
