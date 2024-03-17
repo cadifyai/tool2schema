@@ -238,7 +238,7 @@ class UnionTypeSchema(GenericTypeSchema):
         # We have no way to know which type to decode to, so we try all of them
         # (ordered by priority) and return at the first one that produces a different value.
         for sub_type in self._sorted_sub_types():
-            if sub_type.validate(value) and (dec := sub_type.decode(value)) != value:
+            if (dec := sub_type.decode(value)) != value:
                 return dec
 
         return value
