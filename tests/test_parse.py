@@ -4,7 +4,7 @@ from typing import Callable, Union
 import pytest
 
 from tests import functions
-from tool2schema import ParseSchema
+from tool2schema import LoadGPTEnabled
 from tool2schema.schema import ParseException
 
 ###############################################
@@ -47,14 +47,14 @@ def get_function_dict(func: Callable, arguments: Union[str, dict]):
         (functions.function_union, {"a": None, "b": 1}),
     ],
 )
-def test_parse_schema(function, arguments):
+def test_load_function(function, arguments):
 
     # Add hallucinated argument
     hall_args = {**arguments, "hallucinated": 4}
 
     f_dict = get_function_dict(function, hall_args)
 
-    f, args = ParseSchema(functions, f_dict)
+    f, args = LoadGPTEnabled(functions, f_dict)
 
     assert f == function
     assert args == arguments  # Verify the hallucinated argument has been removed
@@ -63,7 +63,7 @@ def test_parse_schema(function, arguments):
 
     # Verify an exception is raised if hallucinations are not ignored
     with pytest.raises(ParseException):
-        ParseSchema(
+        LoadGPTEnabled(
             functions,
             f_dict,
             validate=True,
@@ -71,24 +71,26 @@ def test_parse_schema(function, arguments):
         )
 
 
-def test_parse_schema_missing_function():
-    assert ParseSchema(functions, get_function_dict(functions.function_not_enabled, "{}")) is None
+def test_load_missing_function():
+    assert (
+        LoadGPTEnabled(functions, get_function_dict(functions.function_not_enabled, "{}")) is None
+    )
 
 
 @pytest.mark.parametrize("arguments", ["", "{", "[]", "23", "null"])
-def test_parse_invalid_json_arguments(arguments):
+def test_load_invalid_json_arguments(arguments):
     with pytest.raises(ParseException):
-        ParseSchema(functions, get_function_dict(functions.function, arguments))
+        LoadGPTEnabled(functions, get_function_dict(functions.function, arguments))
 
 
-def test_parse_missing_name():
+def test_load_missing_name():
     with pytest.raises(ParseException):
-        ParseSchema(functions, {"arguments": "{}"})
+        LoadGPTEnabled(functions, {"arguments": "{}"})
 
 
-def test_parse_missing_arguments():
+def test_load_missing_arguments():
     with pytest.raises(ParseException):
-        ParseSchema(functions, {"name": "function"})
+        LoadGPTEnabled(functions, {"name": "function"})
 
 
 @pytest.mark.parametrize(
@@ -111,13 +113,13 @@ def test_parse_missing_arguments():
         (functions.function_union, {"a": "x", "b": 1}),  # Invalid value for a
     ],
 )
-def test_parse_invalid_argument_values(function, arguments):
+def test_load_invalid_argument_values(function, arguments):
     f_obj = get_function_dict(function, arguments)
 
     with pytest.raises(ParseException):
-        ParseSchema(functions, f_obj)
+        LoadGPTEnabled(functions, f_obj)
 
     # Verify the function and the arguments are returned if validation is disabled
-    f, args = ParseSchema(functions, f_obj, validate=False)
+    f, args = LoadGPTEnabled(functions, f_obj, validate=False)
     assert f == function
     assert args == arguments

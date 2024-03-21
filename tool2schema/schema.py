@@ -81,7 +81,7 @@ class ParseException(Exception):
     pass
 
 
-def ParseSchema(
+def LoadGPTEnabled(
     module: ModuleType,
     function: dict[str, str],
     validate: bool = True,
@@ -101,8 +101,8 @@ def ParseSchema(
     :param validate: Whether to validate the function arguments
     :param ignore_hallucinations: When true, any hallucinated arguments are ignored; when false,
         an exception is raised if any hallucinated arguments are found
-    :return: The function defined in `module`, or None if no function with the expected name
-        and the `GPTEnabled` decorator is found
+    :return: A tuple consisting of the function and a dictionary of argument values, or None if no
+        function with the expected name and the `GPTEnabled` decorator is found
     :raises ParseException: If the argument string is not valid, meaning it is not parsable as JSON,
         it can be parsed but is not a dictionary, it does not include all required arguments, it
         includes values that are not of the expected type, or it contains hallucinated arguments
