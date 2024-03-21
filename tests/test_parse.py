@@ -1,4 +1,5 @@
 import json
+from typing import Callable, Union
 
 import pytest
 
@@ -6,19 +7,23 @@ from tests import functions
 from tool2schema import ParseSchema
 from tool2schema.schema import ParseException
 
-########################################
-#  Function class for testing purposes #
-########################################
+###############################################
+#  Helper method to get function dictionaries #
+###############################################
 
 
-class Function:
+def get_function_dict(func: Callable, arguments: Union[str, dict]):
     """
-    Emulate openai.types.chat.chat_completion_message_tool_call.Function class.
+    Get a dictionary representation of a function, with its name and the
+    specified argument values converted to a JSON string.
     """
+    if isinstance(arguments, dict):
+        arguments = json.dumps(arguments)
 
-    def __init__(self, name: str, arguments: str):
-        self.name = name
-        self.arguments = arguments
+    return {
+        "name": func.__name__,
+        "arguments": arguments,
+    }
 
 
 ######################################################
@@ -43,22 +48,47 @@ class Function:
     ],
 )
 def test_parse_schema(function, arguments):
-    assert ParseSchema(functions, Function(function.__name__, json.dumps(arguments))) == function
 
-    # Add hallucinated argument and verify parsing fails
-    arguments["hallucinated"] = 4
+    # Add hallucinated argument
+    hall_args = {**arguments, "hallucinated": 4}
+
+    f_dict = get_function_dict(function, hall_args)
+
+    f, args = ParseSchema(functions, f_dict)
+
+    assert f == function
+    assert args == arguments  # Verify the hallucinated argument has been removed
+
+    f(**args)  # Verify invoking the function does not throw an exception
+
+    # Verify an exception is raised if hallucinations are not ignored
     with pytest.raises(ParseException):
-        ParseSchema(functions, Function(function.__name__, json.dumps(arguments)))
+        ParseSchema(
+            functions,
+            f_dict,
+            validate=True,
+            ignore_hallucinations=False,
+        )
 
 
 def test_parse_schema_missing_function():
-    assert ParseSchema(functions, Function(functions.function_not_enabled.__name__, "{}")) is None
+    assert ParseSchema(functions, get_function_dict(functions.function_not_enabled, "{}")) is None
 
 
 @pytest.mark.parametrize("arguments", ["", "{", "[]", "23", "null"])
 def test_parse_invalid_json_arguments(arguments):
     with pytest.raises(ParseException):
-        ParseSchema(functions, Function(functions.function.__name__, arguments))
+        ParseSchema(functions, get_function_dict(functions.function, arguments))
+
+
+def test_parse_missing_name():
+    with pytest.raises(ParseException):
+        ParseSchema(functions, {"arguments": "{}"})
+
+
+def test_parse_missing_arguments():
+    with pytest.raises(ParseException):
+        ParseSchema(functions, {"name": "function"})
 
 
 @pytest.mark.parametrize(
@@ -70,22 +100,24 @@ def test_parse_invalid_json_arguments(arguments):
         (functions.function, {"a": 1, "b": "", "c": "x"}),  # Invalid value for c
         (functions.function, {"a": 1, "b": "", "c": True, "d": False}),  # Invalid value for d
         (functions.function, {"a": 1, "b": "", "c": True, "d": [1, "a"]}),  # Invalid array value
-        (functions.function, {"a": 1, "b": "", "c": True, "d": [1], "e": 4}),  # Hallucinated arg
+        (functions.function, {"a": 1, "e": 4}),  # Missing argument and hallucinated arg
         (functions.function_literal, {"a": 3}),  # Invalid value for a
         (functions.function_literal, {"a": 0, "b": "d"}),  # Invalid value for b
         (functions.function_enum, {"a": 1}),
         (functions.function_enum, {"a": "A"}),
         (functions.function_add_enum, {"a": "PERHAPS"}),
-        (functions.function_add_enum, {"a": "MAYBE", "b": "MAYBE"}),  # Hallucinated arg
+        (functions.function_add_enum, {"a": "PERHAPS", "b": "MAYBE"}),
         (functions.function_union, {"a": None, "b": False}),  # Invalid value for b
         (functions.function_union, {"a": "x", "b": 1}),  # Invalid value for a
     ],
 )
 def test_parse_invalid_argument_values(function, arguments):
-    f_obj = Function(function.__name__, json.dumps(arguments))
+    f_obj = get_function_dict(function, arguments)
 
     with pytest.raises(ParseException):
         ParseSchema(functions, f_obj)
 
-    # Verify the function is returned if validation is disabled
-    assert ParseSchema(functions, f_obj, validate=False) == function
+    # Verify the function and the arguments are returned if validation is disabled
+    f, args = ParseSchema(functions, f_obj, validate=False)
+    assert f == function
+    assert args == arguments

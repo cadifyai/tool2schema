@@ -81,65 +81,96 @@ class ParseException(Exception):
     pass
 
 
-def ParseSchema(module: ModuleType, function, validate: bool = True) -> Optional[Callable]:
+def ParseSchema(
+    module: ModuleType,
+    function: dict[str, str],
+    validate: bool = True,
+    ignore_hallucinations: bool = True,
+) -> Optional[tuple[Callable, dict]]:
     """
-    Given a function object (`openai.types.chat.chat_completion_message_tool_call.Function`)
-    retrieve the corresponding function among those with the `GPTEnabled` decorator defined in
-    `module`. When `validate` is true, validate the arguments string and raise `ParseException`
-    if the arguments are not valid and cannot be used to invoke the function.
+    Given a function dictionary containing the name of a function and the arguments to pass to it
+    in the form of a JSON string, retrieve the corresponding function among those with the
+    `GPTEnabled` decorator defined in `module`. When `validate` is true, validate the arguments
+    string and raise `ParseException` if the arguments are not valid and cannot be used to invoke
+    the function.
 
     :param module: The module where the function is defined
-    :param function: An instance of OpenAI Function model
+    :param function: A dictionary with keys `name` and `arguments`, where `name` is the name of
+        the function to find, and `arguments` is a JSON string representing the values to pass to
+        the function as arguments
     :param validate: Whether to validate the function arguments
+    :param ignore_hallucinations: When true, any hallucinated arguments are ignored; when false,
+        an exception is raised if any hallucinated arguments are found
     :return: The function defined in `module`, or None if no function with the expected name
         and the `GPTEnabled` decorator is found
     :raises ParseException: If the argument string is not valid, meaning it is not parsable as JSON,
         it can be parsed but is not a dictionary, it does not include all required arguments, it
         includes values that are not of the expected type, or it contains hallucinated arguments
+        and `ignore_hallucinations` is false
     """
 
-    arguments = None
+    if not (name := function.get("name", None)):
+        raise ParseException("Function name is missing from the dictionary")
+
+    if not (arguments := function.get("arguments", None)):
+        raise ParseException("Function arguments are missing from the dictionary")
+
+    try:
+        arguments = json.loads(arguments)
+
+    except json.decoder.JSONDecodeError:
+        raise ParseException("Arguments are not in valid JSON format")
+
+    if type(arguments) is not dict:
+        raise ParseException("Arguments are not in the form of a dictionary")
+
+    f = FindGPTEnabledByName(module, name)
+
+    if not f:
+        # A function with the given name was not found
+        return None
 
     if validate:
-        try:
-            arguments = json.loads(function.arguments)
+        arguments = _validate_arguments(f, arguments, ignore_hallucinations)
 
-        except json.decoder.JSONDecodeError:
-            raise ParseException("Arguments are not in valid JSON format")
-
-        if type(arguments) is not dict:
-            raise ParseException("Arguments are not in the form of a dictionary")
-
-    f = FindGPTEnabledByName(module, function.name)
-
-    if f and validate:
-        _validate_arguments(f, arguments)
-
-    return f
+    return f, arguments
 
 
-def _validate_arguments(f: Callable, arguments: dict) -> None:
+def _validate_arguments(f: Callable, arguments: dict, ignore_hallucinations: bool) -> dict:
     """
-    Verify that all arguments are present, there are no hallucinated arguments, and the
-    arguments are of the expected type. Raise an exception if any of these conditions is not met.
+    Verify that all required arguments are present, and the arguments are of the expected type.
+    Raise an exception if any of these conditions is not met, or if there are any hallucinated
+    arguments and `ignore_hallucinations` is false.
 
     :param f: A GPTEnabled-decorated function
     :param arguments: Arguments to validate
+    :param ignore_hallucinations: Whether to ignore hallucinated arguments or throw an exception
+        if any are present
+    :return: A dictionary of validated arguments
     """
+    validated = {}
+
     for key, param in f.schema.parameter_schemas.items():
-        value = arguments.pop(key, param.parameter.default)
+        value = arguments.pop(key, Parameter.empty)
 
         if value == Parameter.empty:
-            # The parameter is missing from the arguments and does not have a default value
-            raise ParseException(
-                f"Parameter {key} is missing from the arguments and does not have a default value"
-            )
+            # The parameter is missing from the arguments
+            if param.parameter.default == Parameter.empty:
+                # The parameter does not have a default value
+                raise ParseException(
+                    f"Parameter {key} is missing from the arguments "
+                    f"and does not have a default value"
+                )
+        else:
+            if not param.type_schema.validate(value):
+                raise ParseException(f"Argument {key} cannot accept value {value}")
 
-        if not param.type_schema.validate(value):
-            raise ParseException(f"Argument {key} cannot accept value {value}.")
+            validated[key] = value
 
-    if arguments:
+    if not ignore_hallucinations and arguments:
         raise ParseException(f"Hallucinated argument: {arguments}")
+
+    return validated
 
 
 class _GPTEnabled:
