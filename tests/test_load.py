@@ -61,6 +61,12 @@ def test_load_function(function, arguments):
 
     f(**args)  # Verify invoking the function does not throw an exception
 
+    # Verify we can pass the arguments as a dictionary
+    f, args = LoadGPTEnabled(functions, {"name": function.__name__, "arguments": arguments})
+
+    assert f == function
+    assert args == arguments
+
     # Verify an exception is raised if hallucinations are not ignored
     with pytest.raises(ParseException):
         LoadGPTEnabled(
@@ -74,6 +80,17 @@ def test_load_function(function, arguments):
 def test_load_missing_function():
     with pytest.raises(ParseException):
         LoadGPTEnabled(functions, get_function_dict(functions.function_not_enabled, "{}"))
+
+
+def test_load_invalid_arguments_type():
+    with pytest.raises(ParseException):
+        LoadGPTEnabled(
+            functions,
+            {
+                "name": functions.function.__name__,
+                "arguments": 23,
+            },
+        )
 
 
 @pytest.mark.parametrize("arguments", ["", "{", "[]", "23", "null"])

@@ -1,3 +1,4 @@
+import copy
 import functools
 import inspect
 import json
@@ -83,21 +84,20 @@ class ParseException(Exception):
 
 def LoadGPTEnabled(
     module: ModuleType,
-    function: dict[str, str],
+    function: dict,
     validate: bool = True,
     ignore_hallucinations: bool = True,
 ) -> Optional[tuple[Callable, dict]]:
     """
-    Given a function dictionary containing the name of a function and the arguments to pass to it
-    in the form of a JSON string, retrieve the corresponding function among those with the
-    `GPTEnabled` decorator defined in `module`. When `validate` is true, validate the arguments
-    string and raise `ParseException` if the arguments are not valid and cannot be used to invoke
-    the function.
+    Given a function dictionary containing the name of a function and the arguments to pass to it,
+    retrieve the corresponding function among those with the `GPTEnabled` decorator defined in
+    `module`. When `validate` is true, validate the arguments and raise `ParseException` if the
+    arguments are not valid and cannot be used to invoke the function.
 
     :param module: The module where the function is defined
     :param function: A dictionary with keys `name` and `arguments`, where `name` is the name of
-        the function to find, and `arguments` is a JSON string representing the values to pass to
-        the function as arguments
+        the function to find, and `arguments` is either a dictionary of argument values or a JSON
+        string that can be parsed to a dictionary.
     :param validate: Whether to validate the function arguments
     :param ignore_hallucinations: When true, any hallucinated arguments are ignored; when false,
         an exception is raised if any hallucinated arguments are found. `validate` must be true.
@@ -105,8 +105,8 @@ def LoadGPTEnabled(
     :raises ParseException: Thrown when any of the following conditions is met:
         - The function does not exist in the given module, or it exists but is not decorated with
           `GPTEnabled`
-        - The argument string is not valid, meaning it is not parsable as JSON, or it can be parsed
-          but is not a dictionary
+        - The arguments are given as string and the string is not valid, meaning it is not parsable
+          as JSON, or it can be parsed but is not a dictionary
         - A required argument is missing and `validate` is true
         - An argument has a value that is not of the expected type and `validate` is true
         - The dictionary contains an argument that is not expected by the function, `validate` is
@@ -116,17 +116,27 @@ def LoadGPTEnabled(
     if not (name := function.get("name", None)):
         raise ParseException("Function name is missing from the dictionary")
 
-    if not (arguments := function.get("arguments", None)):
+    if (arguments := function.get("arguments", None)) is None:
         raise ParseException("Function arguments are missing from the dictionary")
 
-    try:
-        arguments = json.loads(arguments)
+    if isinstance(arguments, dict):
+        # Avoid altering the original dictionary
+        arguments = copy.deepcopy(arguments)
 
-    except json.decoder.JSONDecodeError:
-        raise ParseException("Arguments are not in valid JSON format")
+    elif isinstance(arguments, str):
+        # Parse the JSON string
+        try:
+            arguments = json.loads(arguments)
 
-    if type(arguments) is not dict:
-        raise ParseException("Arguments are not in the form of a dictionary")
+        except json.decoder.JSONDecodeError:
+            raise ParseException("Arguments are not in valid JSON format")
+
+        if type(arguments) is not dict:
+            raise ParseException("Arguments are not in the form of a dictionary")
+
+    else:
+        # Invalid type
+        raise ParseException(f"Arguments cannot be of type {type(arguments)}")
 
     f = FindGPTEnabledByName(module, name)
 
