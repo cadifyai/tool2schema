@@ -100,7 +100,7 @@ def LoadGPTEnabled(
         the function as arguments
     :param validate: Whether to validate the function arguments
     :param ignore_hallucinations: When true, any hallucinated arguments are ignored; when false,
-        an exception is raised if any hallucinated arguments are found
+        an exception is raised if any hallucinated arguments are found. `validate` must be true.
     :return: A tuple consisting of the function and a dictionary of argument values, or None if no
         function with the expected name and the `GPTEnabled` decorator is found
     :raises ParseException: If the argument string is not valid, meaning it is not parsable as JSON,
