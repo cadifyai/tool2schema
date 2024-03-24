@@ -168,7 +168,7 @@ def _validate_arguments(f: Callable, arguments: dict, ignore_hallucinations: boo
             validated[key] = value
 
     if not ignore_hallucinations and arguments:
-        raise ParseException(f"Hallucinated argument: {arguments}")
+        raise ParseException(f"Hallucinated argument(s): {', '.join(arguments.keys())}")
 
     return validated
 
