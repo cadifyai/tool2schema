@@ -161,10 +161,7 @@ def _validate_arguments(f: Callable, arguments: dict, ignore_hallucinations: boo
             # The parameter is missing from the arguments
             if param.parameter.default == Parameter.empty:
                 # The parameter does not have a default value
-                raise ParseException(
-                    f"Parameter {key} is missing from the arguments "
-                    f"and does not have a default value"
-                )
+                raise ParseException(f"Required parameter {key} is missing from the arguments")
         else:
             if not param.type_schema.validate(value):
                 raise ParseException(f"Argument {key} cannot accept value {value}")
