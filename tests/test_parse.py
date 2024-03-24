@@ -72,9 +72,8 @@ def test_load_function(function, arguments):
 
 
 def test_load_missing_function():
-    assert (
-        LoadGPTEnabled(functions, get_function_dict(functions.function_not_enabled, "{}")) is None
-    )
+    with pytest.raises(ParseException):
+        LoadGPTEnabled(functions, get_function_dict(functions.function_not_enabled, "{}"))
 
 
 @pytest.mark.parametrize("arguments", ["", "{", "[]", "23", "null"])

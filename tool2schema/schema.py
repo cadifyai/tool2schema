@@ -101,12 +101,16 @@ def LoadGPTEnabled(
     :param validate: Whether to validate the function arguments
     :param ignore_hallucinations: When true, any hallucinated arguments are ignored; when false,
         an exception is raised if any hallucinated arguments are found. `validate` must be true.
-    :return: A tuple consisting of the function and a dictionary of argument values, or None if no
-        function with the expected name and the `GPTEnabled` decorator is found
-    :raises ParseException: If the argument string is not valid, meaning it is not parsable as JSON,
-        it can be parsed but is not a dictionary, it does not include all required arguments, it
-        includes values that are not of the expected type, or it contains hallucinated arguments
-        and `ignore_hallucinations` is false
+    :return: A tuple consisting of the function and a dictionary of argument values
+    :raises ParseException: Thrown when any of the following conditions is met:
+        - The function does not exist in the given module, or it exists but is not decorated with
+          `GPTEnabled`
+        - The argument string is not valid, meaning it is not parsable as JSON, or it can be parsed
+          but is not a dictionary
+        - A required argument is missing and `validate` is true
+        - An argument has a value that is not of the expected type and `validate` is true
+        - The dictionary contains an argument that is not expected by the function, `validate` is
+          true and `ignore_hallucinations` is false
     """
 
     if not (name := function.get("name", None)):
@@ -128,7 +132,7 @@ def LoadGPTEnabled(
 
     if not f:
         # A function with the given name was not found
-        return None
+        raise ParseException("Function is not defined in module or is missing decorator")
 
     if validate:
         arguments = _validate_arguments(f, arguments, ignore_hallucinations)
