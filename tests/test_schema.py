@@ -22,13 +22,20 @@ from . import functions
 
 
 def test_FindGPTEnabled():
+    gpt_functions = FindGPTEnabled(functions)
     # Check that the function is found
-    assert len(FindGPTEnabled(functions)) == 3
-    assert functions.function in FindGPTEnabled(functions)
-    assert functions.function_tags in FindGPTEnabled(functions)
-    assert functions.function_no_params in FindGPTEnabled(functions)
+    assert len(gpt_functions) == 7
+    assert functions.function in gpt_functions
+    assert functions.function_tags in gpt_functions
+    assert functions.function_no_params in gpt_functions
+    assert functions.function_no_params in gpt_functions
+    assert functions.function_no_params in gpt_functions
+    assert functions.function_literal in gpt_functions
+    assert functions.function_add_enum in gpt_functions
+    assert functions.function_enum in gpt_functions
+    assert functions.function_union in gpt_functions
     # Check that the function is not found
-    assert functions.function_not_enabled not in FindGPTEnabled(functions)
+    assert functions.function_not_enabled not in gpt_functions
 
 
 ################################
@@ -37,39 +44,30 @@ def test_FindGPTEnabled():
 
 
 def test_FindGPTEnabledSchemas():
+    gpt_schemas = FindGPTEnabledSchemas(functions)
     # Check that the function is found
-    assert len(FindGPTEnabledSchemas(functions)) == 3
-    assert functions.function.schema.to_json() in FindGPTEnabledSchemas(functions)
-    assert functions.function_tags.schema.to_json() in FindGPTEnabledSchemas(functions)
-    assert functions.function_no_params.schema.to_json() in FindGPTEnabledSchemas(functions)
+    assert len(gpt_schemas) == 7
+    assert functions.function.schema.to_json() in gpt_schemas
+    assert functions.function_tags.schema.to_json() in gpt_schemas
+    assert functions.function_no_params.schema.to_json() in gpt_schemas
+    assert functions.function_literal.schema.to_json() in gpt_schemas
+    assert functions.function_add_enum.schema.to_json() in gpt_schemas
+    assert functions.function_enum.schema.to_json() in gpt_schemas
+    assert functions.function_union.schema.to_json() in gpt_schemas
 
 
-def test_FindGPTEnabledSchemas_API():
+@pytest.mark.parametrize("schema_type", [SchemaType.API, SchemaType.TUNE])
+def test_FindGPTEnabledSchemas_with_type(schema_type):
     # Check that the function is found
-    assert len(FindGPTEnabledSchemas(functions, schema_type=SchemaType.API)) == 3
-    assert functions.function.schema.to_json(SchemaType.API) in FindGPTEnabledSchemas(
-        functions, schema_type=SchemaType.API
-    )
-    assert functions.function_tags.schema.to_json(SchemaType.API) in FindGPTEnabledSchemas(
-        functions, schema_type=SchemaType.API
-    )
-    assert functions.function_no_params.schema.to_json(SchemaType.API) in FindGPTEnabledSchemas(
-        functions, schema_type=SchemaType.API
-    )
-
-
-def test_FindGPTEnabledSchemas_TUNE():
-    # Check that the function is found
-    assert len(FindGPTEnabledSchemas(functions, schema_type=SchemaType.TUNE)) == 3
-    assert functions.function.schema.to_json(SchemaType.TUNE) in FindGPTEnabledSchemas(
-        functions, schema_type=SchemaType.TUNE
-    )
-    assert functions.function_tags.schema.to_json(SchemaType.TUNE) in FindGPTEnabledSchemas(
-        functions, schema_type=SchemaType.TUNE
-    )
-    assert functions.function_no_params.schema.to_json(SchemaType.TUNE) in FindGPTEnabledSchemas(
-        functions, schema_type=SchemaType.TUNE
-    )
+    gpt_schemas = FindGPTEnabledSchemas(functions, schema_type=schema_type)
+    assert len(gpt_schemas) == 7
+    assert functions.function.schema.to_json(schema_type) in gpt_schemas
+    assert functions.function_tags.schema.to_json(schema_type) in gpt_schemas
+    assert functions.function_no_params.schema.to_json(schema_type) in gpt_schemas
+    assert functions.function_literal.schema.to_json(schema_type) in gpt_schemas
+    assert functions.function_add_enum.schema.to_json(schema_type) in gpt_schemas
+    assert functions.function_enum.schema.to_json(schema_type) in gpt_schemas
+    assert functions.function_union.schema.to_json(schema_type) in gpt_schemas
 
 
 ###############################
@@ -96,6 +94,17 @@ def test_FindGPTEnabledByTag():
     assert functions.function_tags in FindGPTEnabledByTag(functions, "test")
     # Check that the function is not found
     assert functions.function not in FindGPTEnabledByTag(functions, "test")
+
+
+############################################
+#  Custom enum class for testing purposes  #
+############################################
+
+
+class CustomEnum(Enum):
+    A = 1
+    B = 2
+    C = 3
 
 
 ##################################
@@ -478,12 +487,58 @@ def test_function_optional():
         "d",
         {
             "description": "This is an optional parameter",
-            "type": "integer",
+            "anyOf": [{"type": "integer"}, {"type": "null"}],
             "default": None,
         },
     )
     assert function_optional.schema.to_json() == rf.schema
     assert function_optional.tags == []
+
+
+@GPTEnabled
+def function_optional_enum(a: int, b: str, c: bool = False, d: Optional[CustomEnum] = None):
+    """
+    This is a test function.
+
+    :param a: This is a parameter
+    :param b: This is another parameter
+    :param c: This is a boolean parameter
+    :param d: This is an optional parameter
+    """
+    return a, b, c, d
+
+
+def test_function_optional_enum():
+    rf = ReferenceSchema(function_optional_enum)
+    rf.set_param(
+        "d",
+        {
+            "description": "This is an optional parameter",
+            "default": None,
+            "anyOf": [{"enum": ["A", "B", "C"], "type": "string"}, {"type": "null"}],
+        },
+    )
+
+    assert function_optional_enum.schema.to_json() == rf.schema
+    assert function_optional_enum.tags == []
+
+    # Verify it is possible to invoke the function with the parsed value
+    _, _, _, d = function_optional_enum(1, "", False, "A")
+    assert d == CustomEnum.A
+
+    _, _, _, d = function_optional_enum(1, "", False, d="A")
+    assert d == CustomEnum.A
+
+    # Verify it is possible to invoke the function with the Enum instance
+    _, _, _, d = function_optional_enum(1, "", False, CustomEnum.A)
+    assert d == CustomEnum.A
+
+    _, _, _, d = function_optional_enum(1, "", False, d=CustomEnum.A)
+    assert d == CustomEnum.A
+
+    # Verify it is possible to invoke the function with None
+    _, _, _, d = function_optional_enum(1, "", False, d=None)
+    assert d is None
 
 
 ##################################################
@@ -660,12 +715,6 @@ def test_function_typing_literal_string():
 #################################################
 
 
-class CustomEnum(Enum):
-    A = 1
-    B = 2
-    C = 3
-
-
 @GPTEnabled
 def function_custom_enum(a: CustomEnum, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
@@ -729,6 +778,54 @@ def test_function_custom_enum_default_value():
     b["enum"] = [x.name for x in CustomEnum]
     assert function_custom_enum_default_value.schema.to_json() == rf.schema
     assert function_custom_enum_default_value.tags == []
+
+
+@GPTEnabled
+def function_custom_enum_list(
+    a: int,
+    b: str,
+    c: bool = False,
+    d: list[CustomEnum] = [CustomEnum.A, CustomEnum.B],
+):
+    """
+    This is a test function.
+
+    :param a: This is a parameter
+    :param b: This is another parameter
+    :param c: This is a boolean parameter
+    :param d: This is a list parameter
+    """
+    return a, b, c, d
+
+
+def test_function_custom_enum_list():
+    rf = ReferenceSchema(function_custom_enum_list)
+    b = rf.get_param("d")
+    b["default"] = ["A", "B"]
+    b["items"] = {"type": "string", "enum": ["A", "B", "C"]}
+
+    assert function_custom_enum_list.schema.to_json() == rf.schema
+    assert function_custom_enum_list.tags == []
+
+    # Verify we can invoke the function providing the encoded enum value
+    _, _, _, d = function_custom_enum_list(1, "", False, ["A"])
+    assert d == [CustomEnum.A]
+
+    # Verify it works with keyword arguments as well
+    _, _, _, d = function_custom_enum_list(1, "", False, d=["A"])
+    assert d == [CustomEnum.A]
+
+    # Verify we can invoke the function providing the enum instance
+    _, _, _, d = function_custom_enum_list(1, "", False, [CustomEnum.A])
+    assert d == [CustomEnum.A]
+
+    # Verify it works with keyword arguments as well
+    _, _, _, d = function_custom_enum_list(1, "", False, d=[CustomEnum.A])
+    assert d == [CustomEnum.A]
+
+    # Verify it works with keyword an empty list
+    _, _, _, d = function_custom_enum_list(1, "", False, d=[])
+    assert d == []
 
 
 ###########################

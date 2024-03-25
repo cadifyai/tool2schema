@@ -1,3 +1,4 @@
+import copy
 import functools
 import inspect
 import json
@@ -9,7 +10,7 @@ from typing import Callable, Optional
 
 import tool2schema
 from tool2schema.config import Config
-from tool2schema.parameter_schema import PARAMETER_SCHEMAS, EnumParameterSchema, ParameterSchema
+from tool2schema.parameter_schema import ParameterSchema
 
 
 class SchemaType(Enum):
@@ -75,6 +76,117 @@ def SaveGPTEnabled(module: ModuleType, path: str, schema_type: SchemaType = Sche
     json.dump(schemas, open(path, "w"))
 
 
+class ParseException(Exception):
+    """Exception for schema parsing errors."""
+
+    pass
+
+
+def LoadGPTEnabled(
+    module: ModuleType,
+    function: dict,
+    validate: bool = True,
+    ignore_hallucinations: bool = True,
+) -> Optional[tuple[Callable, dict]]:
+    """
+    Given a function dictionary containing the name of a function and the arguments to pass to it,
+    retrieve the corresponding function among those with the `GPTEnabled` decorator defined in
+    `module`. When `validate` is true, validate the arguments and raise `ParseException` if the
+    arguments are not valid (see more information below).
+
+    :param module: The module where the function is defined
+    :param function: A dictionary with keys `name` and `arguments`, where `name` is the name of
+        the function to find, and `arguments` is either a dictionary of argument values or a JSON
+        string that can be parsed to a dictionary of argument values.
+    :param validate: Whether to validate the function arguments
+    :param ignore_hallucinations: When true, any hallucinated arguments are ignored; when false,
+        an exception is raised if any hallucinated arguments are found. `validate` must be true.
+    :return: A tuple consisting of the function and a dictionary of argument values
+    :raises ParseException: Thrown when any of the following conditions is met:
+        - Function isn't defined in the given module, or is not decorated with `GPTEnabled`
+        - The arguments are given as string and the string is not valid, meaning it is:
+            - Not parsable as JSON, or;
+            - Is not parsed into a dictionary of argument values
+        - A required argument is missing and `validate` is true
+        - An argument has a value that is not of the expected type and `validate` is true
+        - The dictionary contains an argument that is not expected by the function, `validate` is
+          true and `ignore_hallucinations` is false
+    """
+
+    if not (name := function.get("name", None)):
+        raise ParseException("'name' key is missing from the dictionary")
+
+    if (arguments := function.get("arguments", None)) is None:
+        raise ParseException("'arguments' key is missing from the dictionary")
+
+    if isinstance(arguments, dict):
+        # Avoid altering the original dictionary
+        arguments = copy.deepcopy(arguments)
+
+    elif isinstance(arguments, str):
+        # Parse the JSON string
+        try:
+            arguments = json.loads(arguments)
+
+        except json.decoder.JSONDecodeError:
+            raise ParseException("Arguments are not in valid JSON format")
+
+        if type(arguments) is not dict:
+            raise ParseException("Arguments are not in the form of a dictionary")
+
+    else:
+        # Invalid type
+        raise ParseException(f"Arguments cannot be of type {type(arguments)}")
+
+    f = FindGPTEnabledByName(module, name)
+
+    if not f:
+        # A function with the given name was not found
+        raise ParseException(
+            f"Function with name '{name}' is not defined in given module "
+            f"'{module.__name__}' or is missing 'GPTEnabled' decorator"
+        )
+
+    if validate:
+        arguments = _validate_arguments(f, arguments, ignore_hallucinations)
+
+    return f, arguments
+
+
+def _validate_arguments(f: Callable, arguments: dict, ignore_hallucinations: bool) -> dict:
+    """
+    Verify that all required arguments are present, and the arguments are of the expected type.
+    Raise an exception if any of these conditions is not met, or if there are any hallucinated
+    arguments and `ignore_hallucinations` is false.
+
+    :param f: A GPTEnabled-decorated function
+    :param arguments: Arguments to validate
+    :param ignore_hallucinations: Whether to ignore hallucinated arguments or throw an exception
+        if any are present
+    :return: A dictionary of validated arguments
+    """
+    validated = {}
+
+    for key, param in f.schema.parameter_schemas.items():
+        value = arguments.pop(key, Parameter.empty)
+
+        if value == Parameter.empty:
+            # The parameter is missing from the arguments
+            if param.parameter.default == Parameter.empty:
+                # The parameter does not have a default value
+                raise ParseException(f"Required argument '{key}' is missing")
+        else:
+            if not param.type_schema.validate(value):
+                raise ParseException(f"Argument '{key}' cannot accept value '{value}'")
+
+            validated[key] = value
+
+    if not ignore_hallucinations and arguments:
+        raise ParseException(f"Hallucinated argument(s): {', '.join(arguments.keys())}")
+
+    return validated
+
+
 class _GPTEnabled:
     def __init__(self, func, **kwargs) -> None:
         self.func = func
@@ -91,12 +203,12 @@ class _GPTEnabled:
             for p in self.schema.parameter_schemas.values():
                 if p.index == i:
                     # Convert the JSON value to the type expected by the method
-                    args[i] = p.decode_value(arg)
+                    args[i] = p.type_schema.decode(arg)
 
         for key in kwargs:
             if key in self.schema.parameter_schemas:
                 # Convert the JSON value to the type expected by the method
-                kwargs[key] = self.schema.parameter_schemas[key].decode_value(kwargs[key])
+                kwargs[key] = self.schema.parameter_schemas[key].type_schema.decode(kwargs[key])
 
         return self.func(*args, **kwargs)
 
@@ -150,10 +262,7 @@ class FunctionSchema:
         :param n: The name of the parameter with the enum values
         :param enum: The list of values for the enum parameter
         """
-        p = self._all_parameter_schemas[n]
-        self._all_parameter_schemas[n] = EnumParameterSchema(
-            enum, p.parameter, p.index, self.config, p.docstring
-        )
+        self._all_parameter_schemas[n].add_enum(enum)
         return self
 
     def _get_schema(self) -> dict:
@@ -171,7 +280,7 @@ class FunctionSchema:
 
         if self.parameter_schemas or schema_type == SchemaType.TUNE:
             # If the schema type is tune, add the dictionary even if there are no parameters
-            schema["parameters"] = self._get_parameters_schema(schema_type)
+            schema["parameters"] = self._get_parameters_schema()
 
         if (description := self._get_description()) is not None:
             # Add the function description even if it is an empty string
@@ -179,18 +288,11 @@ class FunctionSchema:
 
         return schema
 
-    def _get_parameters_schema(self, schema_type: SchemaType) -> dict:
+    def _get_parameters_schema(self) -> dict:
         """
         Get the parameters schema dictionary.
         """
-        schema = {"type": "object"}
-
-        if not self.parameter_schemas and schema_type == SchemaType.API:
-            # Skip properties
-            return schema
-
-        # If the schema type is tune, add the dictionary even if empty
-        schema["properties"] = self._get_parameter_properties_schema()
+        schema = {"type": "object", "properties": self._get_parameter_properties_schema()}
 
         if required := self._get_required_parameters():
             schema["required"] = required
@@ -219,10 +321,8 @@ class FunctionSchema:
         parameters = dict()
 
         for i, (n, o) in enumerate(inspect.signature(self.f).parameters.items()):
-            for Param in PARAMETER_SCHEMAS:
-                if Param.matches(o):
-                    parameters[n] = Param(o, i, self.config, self.f.__doc__)
-                    break
+            if schema := ParameterSchema.create(o, i, self.config, self.f.__doc__):
+                parameters[n] = schema
 
         return parameters
 
@@ -255,7 +355,7 @@ class FunctionSchema:
         return req_params
 
     @property
-    def parameter_schemas(self):
+    def parameter_schemas(self) -> dict[str, ParameterSchema]:
         """
         Return a dictionary of parameter schemas, where keys are parameter names
         and values are instances of `ParameterSchema`. Ignored parameters are not
