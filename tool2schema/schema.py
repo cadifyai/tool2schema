@@ -144,7 +144,8 @@ def LoadGPTEnabled(
         # A function with the given name was not found
         raise ParseException(
             f"Function with name '{name}' is not defined in given module "
-            f"'{module.__name__}' or is missing 'GPTEnabled' decorator")
+            f"'{module.__name__}' or is missing 'GPTEnabled' decorator"
+        )
 
     if validate:
         arguments = _validate_arguments(f, arguments, ignore_hallucinations)
