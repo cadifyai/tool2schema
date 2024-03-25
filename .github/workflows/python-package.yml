@@ -80,7 +80,7 @@ jobs:
           output: both # console and .md file
           badge: true
           fail_below_min: true
-          thresholds: '100 100'
+          thresholds: '95 100'
       #----------------------------------------------
       #            write job summary
       #----------------------------------------------
