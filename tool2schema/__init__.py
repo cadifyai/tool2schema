@@ -8,6 +8,7 @@ from .schema import (
     FindGPTEnabledByTag,
     FindGPTEnabledSchemas,
     GPTEnabled,
+    LoadGPTEnabled,
     SaveGPTEnabled,
     SchemaType,
 )

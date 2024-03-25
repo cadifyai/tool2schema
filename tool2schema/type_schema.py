@@ -76,6 +76,17 @@ class TypeSchema:
         """
         return value
 
+    def validate(self, value) -> bool:
+        """
+        Return true if the given value can be considered an instance of this type or can be
+        decoded to an instance of this type.
+
+        :param value: The value to be validated. The value should be non-decoded, i.e., the value
+            as it is after parsing a JSON string
+        :return: True if the value is or can be decoded to an instance of this type
+        """
+        raise NotImplementedError()
+
     def _get_type(self) -> dict:
         """
         Get the type dictionary to be merged in the JSON schema.
@@ -126,6 +137,9 @@ class ValueTypeSchema(TypeSchema):
     @staticmethod
     def matches(p_type) -> bool:
         return True
+
+    def validate(self, value) -> bool:
+        return self.type == type(value)
 
     def _get_type(self) -> dict:
         return {"type": self.TYPE_MAP.get(self.type.__name__, "object")}
@@ -183,6 +197,15 @@ class ListTypeSchema(GenericTypeSchema):
 
         return value
 
+    def validate(self, value) -> bool:
+        if type(value) is not list:
+            return False
+
+        if sub_type := self._get_sub_type():
+            return all(sub_type.validate(v) for v in value)
+
+        return True
+
 
 @GPTTypeSchema
 class UnionTypeSchema(GenericTypeSchema):
@@ -220,6 +243,9 @@ class UnionTypeSchema(GenericTypeSchema):
 
         return value
 
+    def validate(self, value) -> bool:
+        return any(sub_type.validate(value) for sub_type in self._get_sub_types())
+
 
 class EnumTypeSchema(TypeSchema):
     """
@@ -235,6 +261,9 @@ class EnumTypeSchema(TypeSchema):
 
     def _get_enum(self) -> Union[list, Parameter.empty]:
         return self.enum_values
+
+    def validate(self, value) -> bool:
+        return value in self.enum_values
 
 
 @GPTTypeSchema

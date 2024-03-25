@@ -22,13 +22,20 @@ from . import functions
 
 
 def test_FindGPTEnabled():
+    gpt_functions = FindGPTEnabled(functions)
     # Check that the function is found
-    assert len(FindGPTEnabled(functions)) == 3
-    assert functions.function in FindGPTEnabled(functions)
-    assert functions.function_tags in FindGPTEnabled(functions)
-    assert functions.function_no_params in FindGPTEnabled(functions)
+    assert len(gpt_functions) == 7
+    assert functions.function in gpt_functions
+    assert functions.function_tags in gpt_functions
+    assert functions.function_no_params in gpt_functions
+    assert functions.function_no_params in gpt_functions
+    assert functions.function_no_params in gpt_functions
+    assert functions.function_literal in gpt_functions
+    assert functions.function_add_enum in gpt_functions
+    assert functions.function_enum in gpt_functions
+    assert functions.function_union in gpt_functions
     # Check that the function is not found
-    assert functions.function_not_enabled not in FindGPTEnabled(functions)
+    assert functions.function_not_enabled not in gpt_functions
 
 
 ################################
@@ -37,39 +44,30 @@ def test_FindGPTEnabled():
 
 
 def test_FindGPTEnabledSchemas():
+    gpt_schemas = FindGPTEnabledSchemas(functions)
     # Check that the function is found
-    assert len(FindGPTEnabledSchemas(functions)) == 3
-    assert functions.function.schema.to_json() in FindGPTEnabledSchemas(functions)
-    assert functions.function_tags.schema.to_json() in FindGPTEnabledSchemas(functions)
-    assert functions.function_no_params.schema.to_json() in FindGPTEnabledSchemas(functions)
+    assert len(gpt_schemas) == 7
+    assert functions.function.schema.to_json() in gpt_schemas
+    assert functions.function_tags.schema.to_json() in gpt_schemas
+    assert functions.function_no_params.schema.to_json() in gpt_schemas
+    assert functions.function_literal.schema.to_json() in gpt_schemas
+    assert functions.function_add_enum.schema.to_json() in gpt_schemas
+    assert functions.function_enum.schema.to_json() in gpt_schemas
+    assert functions.function_union.schema.to_json() in gpt_schemas
 
 
-def test_FindGPTEnabledSchemas_API():
+@pytest.mark.parametrize("schema_type", [SchemaType.API, SchemaType.TUNE])
+def test_FindGPTEnabledSchemas_with_type(schema_type):
     # Check that the function is found
-    assert len(FindGPTEnabledSchemas(functions, schema_type=SchemaType.API)) == 3
-    assert functions.function.schema.to_json(SchemaType.API) in FindGPTEnabledSchemas(
-        functions, schema_type=SchemaType.API
-    )
-    assert functions.function_tags.schema.to_json(SchemaType.API) in FindGPTEnabledSchemas(
-        functions, schema_type=SchemaType.API
-    )
-    assert functions.function_no_params.schema.to_json(SchemaType.API) in FindGPTEnabledSchemas(
-        functions, schema_type=SchemaType.API
-    )
-
-
-def test_FindGPTEnabledSchemas_TUNE():
-    # Check that the function is found
-    assert len(FindGPTEnabledSchemas(functions, schema_type=SchemaType.TUNE)) == 3
-    assert functions.function.schema.to_json(SchemaType.TUNE) in FindGPTEnabledSchemas(
-        functions, schema_type=SchemaType.TUNE
-    )
-    assert functions.function_tags.schema.to_json(SchemaType.TUNE) in FindGPTEnabledSchemas(
-        functions, schema_type=SchemaType.TUNE
-    )
-    assert functions.function_no_params.schema.to_json(SchemaType.TUNE) in FindGPTEnabledSchemas(
-        functions, schema_type=SchemaType.TUNE
-    )
+    gpt_schemas = FindGPTEnabledSchemas(functions, schema_type=schema_type)
+    assert len(gpt_schemas) == 7
+    assert functions.function.schema.to_json(schema_type) in gpt_schemas
+    assert functions.function_tags.schema.to_json(schema_type) in gpt_schemas
+    assert functions.function_no_params.schema.to_json(schema_type) in gpt_schemas
+    assert functions.function_literal.schema.to_json(schema_type) in gpt_schemas
+    assert functions.function_add_enum.schema.to_json(schema_type) in gpt_schemas
+    assert functions.function_enum.schema.to_json(schema_type) in gpt_schemas
+    assert functions.function_union.schema.to_json(schema_type) in gpt_schemas
 
 
 ###############################
