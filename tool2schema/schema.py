@@ -8,7 +8,7 @@ import re
 from enum import Enum
 from inspect import Parameter
 from types import ModuleType
-from typing import Callable, Optional, Union
+from typing import Callable, Optional, Union, ParamSpec, TypeVar, Generic
 
 import tool2schema
 from tool2schema.config import Config
@@ -189,15 +189,19 @@ def _validate_arguments(f: Callable, arguments: dict, ignore_hallucinations: boo
     return validated
 
 
-class _GPTEnabled:
-    def __init__(self, func, **kwargs) -> None:
+P = ParamSpec("P")  # User-provided function parameters type
+T = TypeVar("T")  # User-provided function return type
+
+
+class _GPTEnabled(Generic[P, T]):
+    def __init__(self, func: Callable[P, T], **kwargs) -> None:
         self.func = func
         self.tags = kwargs.pop("tags", [])
         self.config = Config(tool2schema.CONFIG, **kwargs)
         self.schema = FunctionSchema(func, self.config)
         functools.update_wrapper(self, func)
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> T:
 
         args = list(args)  # Tuple is immutable, thus convert to list
 
@@ -222,14 +226,14 @@ class _GPTEnabled:
 
 
 def GPTEnabled(
-    func: Callable = None, **kwargs
-) -> Union[_GPTEnabled, Callable[[Callable], _GPTEnabled]]:
+    func: Callable[P, T] = None, **kwargs
+) -> Union[_GPTEnabled[P, T], Callable[[Callable[P, T]], _GPTEnabled[P, T]]]:
     """Decorator to generate a function schema for OpenAI."""
     if func:
         return _GPTEnabled(func, **kwargs)
     else:
 
-        def wrapper(function):
+        def wrapper(function: Callable[P, T]) -> _GPTEnabled[P, T]:
             return _GPTEnabled(function, **kwargs)
 
         return wrapper
