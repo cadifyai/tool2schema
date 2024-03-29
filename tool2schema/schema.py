@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import copy
 import functools
 import inspect
@@ -6,7 +8,7 @@ import re
 from enum import Enum
 from inspect import Parameter
 from types import ModuleType
-from typing import Callable, Optional
+from typing import Callable, Optional, Union
 
 import tool2schema
 from tool2schema.config import Config
@@ -219,7 +221,9 @@ class _GPTEnabled:
         return tag in self.tags
 
 
-def GPTEnabled(func=None, **kwargs):
+def GPTEnabled(
+    func: Callable = None, **kwargs
+) -> Union[_GPTEnabled, Callable[[Callable], _GPTEnabled]]:
     """Decorator to generate a function schema for OpenAI."""
     if func:
         return _GPTEnabled(func, **kwargs)
@@ -255,12 +259,13 @@ class FunctionSchema:
 
         return self._get_schema()
 
-    def add_enum(self, n: str, enum: list) -> "FunctionSchema":
+    def add_enum(self, n: str, enum: list) -> FunctionSchema:
         """
         Add enum property to a particular function parameter.
 
         :param n: The name of the parameter with the enum values
         :param enum: The list of values for the enum parameter
+        :return: This function schema
         """
         self._all_parameter_schemas[n].add_enum(enum)
         return self
