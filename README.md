@@ -1,6 +1,7 @@
 # tool2schema
 
 [![Check Code](https://github.com/cadifyai/tool2schema/actions/workflows/python-package.yml/badge.svg?branch=main)](https://github.com/cadifyai/tool2schema/actions/workflows/python-package.yml)
+[![Downloads](https://static.pepy.tech/badge/tool2schema)](https://pepy.tech/project/tool2schema)
 
 A library to convert Python functions to schemas supported by the OpenAI API.
 
@@ -114,7 +115,7 @@ Any other parameter types will be listed as `object` in the schema.
 
 ### Enumerations
 
-If you want to limit the possible values of a parameter, you can use a `typing.Literal` type hint or a 
+If you want to limit the possible values of a parameter, you can use a `typing.Literal` type hint or a
 subclass of `enum.Enum`. For example, using `typing.Literal`:
 
 ```python
@@ -154,12 +155,12 @@ def my_function(a: int, b: MyEnum):
 ```
 
 In the case of `Enum` subclasses, note that the schema will include the enumeration names rather than the values.
-In the example above, the schema will include `["YES", "NO"]` rather than `[0, 1]`. 
+In the example above, the schema will include `["YES", "NO"]` rather than `[0, 1]`.
 
-The `@GPTEnabled` decorator also allows to invoke the function using the name of the enum member rather than an 
+The `@GPTEnabled` decorator also allows to invoke the function using the name of the enum member rather than an
 instance of the class. For example, you may invoke `my_function(1, MyEnum.YES)` as `my_function(1, "YES")`.
 
-If the enumeration values are not known at the time of defining the function, 
+If the enumeration values are not known at the time of defining the function,
 you can add them later using the `add_enum` method.
 
 ```python
@@ -218,9 +219,9 @@ def my_function(a: int, b: str, c: float):
 The available settings are:
 - `ignore_parameters`: A list of parameter names to exclude from the schema (defaults to `[]`).
 - `ignore_all_parameters`: A boolean value indicating whether to exclude all parameters from the schema
-  (defaults to `False`). When set to true, all other parameter-related settings (`ignore_parameters` and 
+  (defaults to `False`). When set to true, all other parameter-related settings (`ignore_parameters` and
   `ignore_parameter_descriptions`) will be ignored.
-- `ignore_function_description`: A boolean value indicating whether to exclude the function description from 
+- `ignore_function_description`: A boolean value indicating whether to exclude the function description from
   the schema (defaults to `False`).
 - `ignore_parameter_descriptions`: A boolean value indicating whether to exclude all parameter descriptions
   from the schema (defaults to `False`).
