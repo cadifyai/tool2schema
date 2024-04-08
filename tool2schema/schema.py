@@ -6,7 +6,7 @@ import re
 from enum import Enum
 from inspect import Parameter
 from types import ModuleType
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 import tool2schema
 from tool2schema.config import Config
@@ -87,7 +87,7 @@ def LoadGPTEnabled(
     function: dict,
     validate: bool = True,
     ignore_hallucinations: bool = True,
-) -> Optional[tuple[Callable, dict]]:
+) -> tuple[Callable, dict[str, Any]]:
     """
     Given a function dictionary containing the name of a function and the arguments to pass to it,
     retrieve the corresponding function among those with the `GPTEnabled` decorator defined in
