@@ -6,7 +6,7 @@ import re
 from enum import Enum
 from inspect import Parameter
 from types import ModuleType
-from typing import Callable, Optional, Any
+from typing import Any, Callable, Optional
 
 import tool2schema
 from tool2schema.config import Config
