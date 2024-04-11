@@ -5,14 +5,20 @@ import functools
 import inspect
 import json
 import re
+import sys
 from enum import Enum
 from inspect import Parameter
 from types import ModuleType
-from typing import Any, Callable, Generic, Optional, ParamSpec, TypeVar, Union
+from typing import Any, Callable, Generic, Optional, TypeVar, Union
 
 import tool2schema
 from tool2schema.config import Config
 from tool2schema.parameter_schema import ParameterSchema
+
+if sys.version_info < (3, 10):
+    from typing_extensions import ParamSpec
+else:
+    from typing import ParamSpec
 
 
 class SchemaType(Enum):
@@ -22,7 +28,7 @@ class SchemaType(Enum):
     TUNE = 1
 
 
-def FindGPTEnabled(module: ModuleType) -> list[Callable]:
+def FindGPTEnabled(module: ModuleType) -> list[_GPTEnabled]:
     """
     Find all functions with the GPTEnabled decorator.
 
@@ -43,7 +49,7 @@ def FindGPTEnabledSchemas(
     return [x.schema.to_json(schema_type) for x in FindGPTEnabled(module)]
 
 
-def FindGPTEnabledByName(module: ModuleType, name: str) -> Optional[Callable]:
+def FindGPTEnabledByName(module: ModuleType, name: str) -> Optional[_GPTEnabled]:
     """
     Find a function with the GPTEnabled decorator by name.
 
@@ -56,7 +62,7 @@ def FindGPTEnabledByName(module: ModuleType, name: str) -> Optional[Callable]:
     return None
 
 
-def FindGPTEnabledByTag(module: ModuleType, tag: str) -> list[Callable]:
+def FindGPTEnabledByTag(module: ModuleType, tag: str) -> list[_GPTEnabled]:
     """
     Find all functions with the GPTEnabled decorator by tag.
 
