@@ -28,7 +28,7 @@ class SchemaType(Enum):
     TUNE = 1
 
 
-def FindGPTEnabled(module: ModuleType) -> list[_GPTEnabled]:
+def FindGPTEnabled(module: ModuleType) -> list[ToolEnabled]:
     """
     Find all functions with the GPTEnabled decorator.
 
@@ -49,7 +49,7 @@ def FindGPTEnabledSchemas(
     return [x.schema.to_json(schema_type) for x in FindGPTEnabled(module)]
 
 
-def FindGPTEnabledByName(module: ModuleType, name: str) -> Optional[_GPTEnabled]:
+def FindGPTEnabledByName(module: ModuleType, name: str) -> Optional[ToolEnabled]:
     """
     Find a function with the GPTEnabled decorator by name.
 
@@ -62,7 +62,7 @@ def FindGPTEnabledByName(module: ModuleType, name: str) -> Optional[_GPTEnabled]
     return None
 
 
-def FindGPTEnabledByTag(module: ModuleType, tag: str) -> list[_GPTEnabled]:
+def FindGPTEnabledByTag(module: ModuleType, tag: str) -> list[ToolEnabled]:
     """
     Find all functions with the GPTEnabled decorator by tag.
 
@@ -199,7 +199,7 @@ P = ParamSpec("P")  # User-provided function parameters type
 T = TypeVar("T")  # User-provided function return type
 
 
-class _GPTEnabled(Generic[P, T]):
+class ToolEnabled(Generic[P, T]):
     def __init__(self, func: Callable[P, T], **kwargs) -> None:
         self.func = func
         self.tags = kwargs.pop("tags", [])
@@ -233,14 +233,14 @@ class _GPTEnabled(Generic[P, T]):
 
 def GPTEnabled(
     func: Callable[P, T] = None, **kwargs
-) -> Union[_GPTEnabled[P, T], Callable[[Callable[P, T]], _GPTEnabled[P, T]]]:
+) -> Union[ToolEnabled[P, T], Callable[[Callable[P, T]], ToolEnabled[P, T]]]:
     """Decorator to generate a function schema for OpenAI."""
     if func:
-        return _GPTEnabled(func, **kwargs)
+        return ToolEnabled(func, **kwargs)
     else:
 
-        def wrapper(function: Callable[P, T]) -> _GPTEnabled[P, T]:
-            return _GPTEnabled(function, **kwargs)
+        def wrapper(function: Callable[P, T]) -> ToolEnabled[P, T]:
+            return ToolEnabled(function, **kwargs)
 
         return wrapper
 
