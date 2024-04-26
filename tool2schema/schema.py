@@ -241,7 +241,7 @@ def GPTEnabled(**kwargs) -> Callable[[Callable[P, T]], ToolEnabled[P, T]]:
     ...
 
 
-def GPTEnabled(func = None, **kwargs):
+def GPTEnabled(func=None, **kwargs):
     """Decorator to generate a function schema for OpenAI."""
     if func is not None:
         return ToolEnabled(func, **kwargs)
