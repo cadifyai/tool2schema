@@ -207,10 +207,6 @@ class ToolEnabled(Generic[P, T]):
         self.schema = FunctionSchema(func, self.config)
         functools.update_wrapper(self, func)
 
-    @property
-    def __name__(self) -> str:
-        return self.func.__name__
-
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> T:
 
         args = list(args)  # Tuple is immutable, thus convert to list
