@@ -1,16 +1,24 @@
+from __future__ import annotations
+
 import copy
 import functools
 import inspect
 import json
 import re
+import sys
 from enum import Enum
 from inspect import Parameter
 from types import ModuleType
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Generic, Optional, TypeVar, overload
 
 import tool2schema
 from tool2schema.config import Config
 from tool2schema.parameter_schema import ParameterSchema
+
+if sys.version_info < (3, 10):
+    from typing_extensions import ParamSpec
+else:
+    from typing import ParamSpec
 
 
 class SchemaType(Enum):
@@ -20,7 +28,7 @@ class SchemaType(Enum):
     TUNE = 1
 
 
-def FindGPTEnabled(module: ModuleType) -> list[Callable]:
+def FindGPTEnabled(module: ModuleType) -> list[ToolEnabled]:
     """
     Find all functions with the GPTEnabled decorator.
 
@@ -41,7 +49,7 @@ def FindGPTEnabledSchemas(
     return [x.schema.to_json(schema_type) for x in FindGPTEnabled(module)]
 
 
-def FindGPTEnabledByName(module: ModuleType, name: str) -> Optional[Callable]:
+def FindGPTEnabledByName(module: ModuleType, name: str) -> Optional[ToolEnabled]:
     """
     Find a function with the GPTEnabled decorator by name.
 
@@ -54,7 +62,7 @@ def FindGPTEnabledByName(module: ModuleType, name: str) -> Optional[Callable]:
     return None
 
 
-def FindGPTEnabledByTag(module: ModuleType, tag: str) -> list[Callable]:
+def FindGPTEnabledByTag(module: ModuleType, tag: str) -> list[ToolEnabled]:
     """
     Find all functions with the GPTEnabled decorator by tag.
 
@@ -153,7 +161,7 @@ def LoadGPTEnabled(
     return f, arguments
 
 
-def _validate_arguments(f: Callable, arguments: dict, ignore_hallucinations: bool) -> dict:
+def _validate_arguments(f: ToolEnabled, arguments: dict, ignore_hallucinations: bool) -> dict:
     """
     Verify that all required arguments are present, and the arguments are of the expected type.
     Raise an exception if any of these conditions is not met, or if there are any hallucinated
@@ -187,15 +195,19 @@ def _validate_arguments(f: Callable, arguments: dict, ignore_hallucinations: boo
     return validated
 
 
-class _GPTEnabled:
-    def __init__(self, func, **kwargs) -> None:
+P = ParamSpec("P")  # User-provided function parameters type
+T = TypeVar("T")  # User-provided function return type
+
+
+class ToolEnabled(Generic[P, T]):
+    def __init__(self, func: Callable[P, T], **kwargs) -> None:
         self.func = func
         self.tags = kwargs.pop("tags", [])
         self.config = Config(tool2schema.CONFIG, **kwargs)
         self.schema = FunctionSchema(func, self.config)
         functools.update_wrapper(self, func)
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> T:
 
         args = list(args)  # Tuple is immutable, thus convert to list
 
@@ -219,14 +231,22 @@ class _GPTEnabled:
         return tag in self.tags
 
 
+@overload
+def GPTEnabled(func: Callable[P, T], **kwargs) -> ToolEnabled[P, T]: ...
+
+
+@overload
+def GPTEnabled(**kwargs) -> Callable[[Callable[P, T]], ToolEnabled[P, T]]: ...
+
+
 def GPTEnabled(func=None, **kwargs):
     """Decorator to generate a function schema for OpenAI."""
-    if func:
-        return _GPTEnabled(func, **kwargs)
+    if func is not None:
+        return ToolEnabled(func, **kwargs)
     else:
 
-        def wrapper(function):
-            return _GPTEnabled(function, **kwargs)
+        def wrapper(function: Callable[P, T]) -> ToolEnabled[P, T]:
+            return ToolEnabled(function, **kwargs)
 
         return wrapper
 
@@ -255,12 +275,13 @@ class FunctionSchema:
 
         return self._get_schema()
 
-    def add_enum(self, n: str, enum: list) -> "FunctionSchema":
+    def add_enum(self, n: str, enum: list) -> FunctionSchema:
         """
         Add enum property to a particular function parameter.
 
         :param n: The name of the parameter with the enum values
         :param enum: The list of values for the enum parameter
+        :return: This function schema
         """
         self._all_parameter_schemas[n].add_enum(enum)
         return self
@@ -276,7 +297,7 @@ class FunctionSchema:
         """
         Get the function schema dictionary.
         """
-        schema = {"name": self.f.__name__}
+        schema: dict[str, Any] = {"name": self.f.__name__}
 
         if self.parameter_schemas or schema_type == SchemaType.TUNE:
             # If the schema type is tune, add the dictionary even if there are no parameters
