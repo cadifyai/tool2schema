@@ -9,7 +9,7 @@ import sys
 from enum import Enum
 from inspect import Parameter
 from types import ModuleType
-from typing import Any, Callable, Generic, Optional, TypeVar, Union
+from typing import Any, Callable, Generic, Optional, TypeVar, overload
 
 import tool2schema
 from tool2schema.config import Config
@@ -231,11 +231,19 @@ class ToolEnabled(Generic[P, T]):
         return tag in self.tags
 
 
-def GPTEnabled(
-    func: Optional[Callable[P, T]] = None, **kwargs
-) -> Union[ToolEnabled[P, T], Callable[[Callable[P, T]], ToolEnabled[P, T]]]:
+@overload
+def GPTEnabled(func: Callable[P, T], **kwargs) -> ToolEnabled[P, T]:
+    ...
+
+
+@overload
+def GPTEnabled(**kwargs) -> Callable[[Callable[P, T]], ToolEnabled[P, T]]:
+    ...
+
+
+def GPTEnabled(func = None, **kwargs):
     """Decorator to generate a function schema for OpenAI."""
-    if func:
+    if func is not None:
         return ToolEnabled(func, **kwargs)
     else:
 
