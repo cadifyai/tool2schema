@@ -232,13 +232,11 @@ class ToolEnabled(Generic[P, T]):
 
 
 @overload
-def GPTEnabled(func: Callable[P, T], **kwargs) -> ToolEnabled[P, T]:
-    ...
+def GPTEnabled(func: Callable[P, T], **kwargs) -> ToolEnabled[P, T]: ...
 
 
 @overload
-def GPTEnabled(**kwargs) -> Callable[[Callable[P, T]], ToolEnabled[P, T]]:
-    ...
+def GPTEnabled(**kwargs) -> Callable[[Callable[P, T]], ToolEnabled[P, T]]: ...
 
 
 def GPTEnabled(func=None, **kwargs):
