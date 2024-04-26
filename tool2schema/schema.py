@@ -161,7 +161,7 @@ def LoadGPTEnabled(
     return f, arguments
 
 
-def _validate_arguments(f: Callable, arguments: dict, ignore_hallucinations: bool) -> dict:
+def _validate_arguments(f: ToolEnabled, arguments: dict, ignore_hallucinations: bool) -> dict:
     """
     Verify that all required arguments are present, and the arguments are of the expected type.
     Raise an exception if any of these conditions is not met, or if there are any hallucinated
@@ -207,6 +207,10 @@ class ToolEnabled(Generic[P, T]):
         self.schema = FunctionSchema(func, self.config)
         functools.update_wrapper(self, func)
 
+    @property
+    def __name__(self) -> str:
+        return self.func.__name__
+
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> T:
 
         args = list(args)  # Tuple is immutable, thus convert to list
@@ -232,7 +236,7 @@ class ToolEnabled(Generic[P, T]):
 
 
 def GPTEnabled(
-    func: Callable[P, T] = None, **kwargs
+    func: Optional[Callable[P, T]] = None, **kwargs
 ) -> Union[ToolEnabled[P, T], Callable[[Callable[P, T]], ToolEnabled[P, T]]]:
     """Decorator to generate a function schema for OpenAI."""
     if func:
@@ -291,7 +295,7 @@ class FunctionSchema:
         """
         Get the function schema dictionary.
         """
-        schema = {"name": self.f.__name__}
+        schema: dict[str, Any] = {"name": self.f.__name__}
 
         if self.parameter_schemas or schema_type == SchemaType.TUNE:
             # If the schema type is tune, add the dictionary even if there are no parameters
