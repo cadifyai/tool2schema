@@ -1,4 +1,5 @@
 [tool.isort]
+profile = "black"
 src_paths = ["tool2schema", "tests"]
 line_length = 100
 
