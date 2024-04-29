@@ -24,8 +24,9 @@ else:
 class SchemaType(Enum):
     """Enum for schema types."""
 
-    API = 0
-    TUNE = 1
+    OPENAI_API = 0
+    OPENAI_TUNE = 1
+    ANTHROPIC_CLAUDE = 2
 
 
 def FindGPTEnabled(module: ModuleType) -> list[ToolEnabled]:
@@ -38,7 +39,7 @@ def FindGPTEnabled(module: ModuleType) -> list[ToolEnabled]:
 
 
 def FindGPTEnabledSchemas(
-    module: ModuleType, schema_type: SchemaType = SchemaType.API
+    module: ModuleType, schema_type: SchemaType = SchemaType.OPENAI_API
 ) -> list[dict]:
     """
     Find all function schemas with the GPTEnabled decorator.
@@ -72,7 +73,7 @@ def FindGPTEnabledByTag(module: ModuleType, tag: str) -> list[ToolEnabled]:
     return [x for x in FindGPTEnabled(module) if x.has(tag)]
 
 
-def SaveGPTEnabled(module: ModuleType, path: str, schema_type: SchemaType = SchemaType.API):
+def SaveGPTEnabled(module: ModuleType, path: str, schema_type: SchemaType = SchemaType.OPENAI_API):
     """
     Save all function schemas with the GPTEnabled decorator to a file.
 
@@ -265,12 +266,14 @@ class FunctionSchema:
         self.config = config
         self._all_parameter_schemas: dict[str, ParameterSchema] = self._get_all_parameter_schemas()
 
-    def to_json(self, schema_type: SchemaType = SchemaType.API) -> dict:
+    def to_json(self, schema_type: SchemaType = SchemaType.OPENAI_API) -> dict:
         """
         Convert schema to JSON.
         :param schema_type: Type of schema to return
         """
-        if schema_type == SchemaType.TUNE:
+        if schema_type == SchemaType.OPENAI_TUNE:
+            return self._get_function_schema(schema_type)
+        elif schema_type == SchemaType.ANTHROPIC_CLAUDE:
             return self._get_function_schema(schema_type)
 
         return self._get_schema()
@@ -291,7 +294,7 @@ class FunctionSchema:
         Get the complete schema dictionary.
         """
         # This dictionary is only used with the API schema type
-        return {"type": "function", "function": self._get_function_schema(SchemaType.API)}
+        return {"type": "function", "function": self._get_function_schema(SchemaType.OPENAI_API)}
 
     def _get_function_schema(self, schema_type: SchemaType) -> dict:
         """
@@ -299,9 +302,15 @@ class FunctionSchema:
         """
         schema: dict[str, Any] = {"name": self.f.__name__}
 
-        if self.parameter_schemas or schema_type == SchemaType.TUNE:
+        need_empty_param = schema_type in [
+            SchemaType.OPENAI_TUNE,
+            SchemaType.ANTHROPIC_CLAUDE]
+        if self.parameter_schemas or need_empty_param:
             # If the schema type is tune, add the dictionary even if there are no parameters
-            schema["parameters"] = self._get_parameters_schema()
+            if schema_type == SchemaType.ANTHROPIC_CLAUDE:
+                schema["input_schema"] = self._get_parameters_schema()
+            else:
+                schema["parameters"] = self._get_parameters_schema()
 
         if (description := self._get_description()) is not None:
             # Add the function description even if it is an empty string
