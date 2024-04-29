@@ -56,7 +56,7 @@ def test_FindGPTEnabledSchemas():
     assert functions.function_union.schema.to_json() in gpt_schemas
 
 
-@pytest.mark.parametrize("schema_type", [SchemaType.API, SchemaType.TUNE])
+@pytest.mark.parametrize("schema_type", [SchemaType.OPENAI_API, SchemaType.OPENAI_TUNE, SchemaType.ANTHROPIC_CLAUDE])
 def test_FindGPTEnabledSchemas_with_type(schema_type):
     # Check that the function is found
     gpt_schemas = FindGPTEnabledSchemas(functions, schema_type=schema_type)
@@ -170,6 +170,15 @@ class ReferenceSchema:
         """
         return self.get_function()
 
+    @property
+    def anthropic_schema(self):
+        """
+        :return: The anthropic version of the schema.
+        """
+        function_schema = self.get_function()
+        function_schema["input_schema"] = function_schema.pop("parameters")
+        return function_schema
+
     def remove_param(self, param: str) -> None:
         """
         Remove a parameter from the schema.
@@ -205,7 +214,7 @@ class ReferenceSchema:
         """
         return self.get_parameters().get("required")
 
-    def get_function(self):
+    def get_function(self) -> dict:
         """
         Get the function dictionary.
         """
@@ -252,7 +261,8 @@ def test_function():
 
 def test_function_tune():
     rf = ReferenceSchema(function)
-    assert function.schema.to_json(SchemaType.TUNE) == rf.tune_schema
+    assert function.schema.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
+    assert function.schema.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
     assert function.tags == []
 
 
@@ -282,7 +292,8 @@ def test_function_tags():
 
 def test_function_tags_tune():
     rf = ReferenceSchema(function_tags)
-    assert function_tags.schema.to_json(SchemaType.TUNE) == rf.tune_schema
+    assert function_tags.schema.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
+    assert function_tags.schema.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
     assert function_tags.tags == ["test"]
 
 
@@ -311,7 +322,8 @@ def test_function_enum():
     rf = ReferenceSchema(function_enum)
     rf.get_param("a")["enum"] = [1, 2, 3]
     assert function_enum.schema.to_json() == rf.schema
-    assert function_enum.schema.to_json(SchemaType.TUNE) == rf.tune_schema
+    assert function_enum.schema.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
+    assert function_enum.schema.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
     assert function_enum.tags == []
 
 
@@ -339,7 +351,8 @@ def test_function_no_params_tune():
     rf = ReferenceSchema(function_no_params)
     rf.get_parameters().pop("required")
     rf.get_parameters()["properties"] = {}
-    assert function_no_params.schema.to_json(SchemaType.TUNE) == rf.tune_schema
+    assert function_no_params.schema.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
+    assert function_no_params.schema.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
     assert function_no_params.tags == []
 
 
@@ -851,7 +864,8 @@ def test_function_ignore_parameters():
     rf.remove_param("a")
     rf.remove_param("d")
     assert function_ignore_parameters.schema.to_json() == rf.schema
-    assert function_ignore_parameters.schema.to_json(SchemaType.TUNE) == rf.tune_schema
+    assert function_ignore_parameters.schema.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
+    assert function_ignore_parameters.schema.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
     assert function_ignore_parameters.tags == []
 
 
@@ -879,7 +893,8 @@ def test_function_ignore_parameter_descriptions():
     rf = ReferenceSchema(function_ignore_parameter_descriptions)
     rf.remove_parameter_descriptions()
     assert function_ignore_parameter_descriptions.schema.to_json() == rf.schema
-    assert function_ignore_parameter_descriptions.schema.to_json(SchemaType.TUNE) == rf.tune_schema
+    assert function_ignore_parameter_descriptions.schema.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
+    assert function_ignore_parameter_descriptions.schema.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
     assert function_ignore_parameter_descriptions.tags == []
 
 
@@ -905,7 +920,8 @@ def test_function_ignore_function_description():
     rf = ReferenceSchema(function_ignore_function_description)
     rf.get_function().pop("description")
     assert function_ignore_function_description.schema.to_json() == rf.schema
-    assert function_ignore_function_description.schema.to_json(SchemaType.TUNE) == rf.tune_schema
+    assert function_ignore_function_description.schema.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
+    assert function_ignore_function_description.schema.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
     assert function_ignore_function_description.tags == []
 
 
@@ -937,7 +953,8 @@ def test_function_ignore_all_parameters_tune():
     rf = ReferenceSchema(function_ignore_all_parameters)
     rf.get_parameters().pop("required")
     rf.get_parameters()["properties"] = {}
-    assert function_ignore_all_parameters.schema.to_json(SchemaType.TUNE) == rf.tune_schema
+    assert function_ignore_all_parameters.schema.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
+    assert function_ignore_all_parameters.schema.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
     assert function_ignore_all_parameters.tags == []
 
 
@@ -962,7 +979,8 @@ def test_global_configuration_ignore_parameters(global_config):
     rf.remove_param("b")
     rf.remove_param("c")
     assert function.schema.to_json() == rf.schema
-    assert function.schema.to_json(SchemaType.TUNE) == rf.tune_schema
+    assert function.schema.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
+    assert function.schema.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
     assert function.tags == []
 
 
@@ -974,7 +992,8 @@ def test_global_configuration_ignore_parameter_descriptions(global_config):
     rf.remove_parameter_descriptions()
 
     assert function.schema.to_json() == rf.schema
-    assert function.schema.to_json(SchemaType.TUNE) == rf.tune_schema
+    assert function.schema.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
+    assert function.schema.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
     assert function.tags == []
 
 
@@ -986,7 +1005,8 @@ def test_global_configuration_ignore_function_description(global_config):
     rf.get_function().pop("description")
 
     assert function.schema.to_json() == rf.schema
-    assert function.schema.to_json(SchemaType.TUNE) == rf.tune_schema
+    assert function.schema.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
+    assert function.schema.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
     assert function.tags == []
 
 
@@ -1009,7 +1029,8 @@ def test_global_configuration_ignore_all_parameters_tune(global_config):
     rf.get_parameters().pop("required")
     rf.get_parameters()["properties"] = {}
 
-    assert function.schema.to_json(SchemaType.TUNE) == rf.tune_schema
+    assert function.schema.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
+    assert function.schema.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
     assert function.tags == []
 
 
