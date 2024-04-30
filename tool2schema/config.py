@@ -1,7 +1,16 @@
 from __future__ import annotations
 
 import copy
+from enum import Enum
 from typing import Optional
+
+
+class SchemaType(Enum):
+    """Enum for schema types."""
+
+    OPENAI_API = 0
+    OPENAI_TUNE = 1
+    ANTHROPIC_CLAUDE = 2
 
 
 class Config:
@@ -13,6 +22,17 @@ class Config:
         self._parent = parent
         self._settings = settings
         self._initial_settings = copy.deepcopy(settings)
+
+    @property
+    def schema_type(self) -> SchemaType:
+        """
+        Type of the schema to create.
+        """
+        return self._get_setting(Config.schema_type.fget.__name__, SchemaType.OPENAI_API)
+
+    @schema_type.setter
+    def schema_type(self, value: SchemaType):
+        self._set_setting(Config.schema_type.fget.__name__, value)
 
     @property
     def ignore_parameters(self) -> list[str]:
