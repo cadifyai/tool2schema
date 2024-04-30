@@ -47,7 +47,7 @@ def FindToolEnabledSchemas(
     :param module: Module to search for ToolEnabled functions
     :param schema_type: Type of schema to return
     """
-    return [x.schema.to_json(schema_type) for x in FindToolEnabled(module)]
+    return [x.to_json(schema_type) for x in FindToolEnabled(module)]
 
 
 def FindToolEnabledByName(module: ModuleType, name: str) -> Optional[ToolEnabled]:
@@ -63,7 +63,7 @@ def FindToolEnabledByName(module: ModuleType, name: str) -> Optional[ToolEnabled
     return None
 
 
-def FindToolEnabledByNameSchema(module: ModuleType, name: str, schema_type: SchemaType) -> Optional[dict]:
+def FindToolEnabledByNameSchema(module: ModuleType, name: str, schema_type: SchemaType = SchemaType.OPENAI_API) -> Optional[dict]:
     """
     Find a function schema with the EnableTool decorator by name.
 
@@ -73,7 +73,7 @@ def FindToolEnabledByNameSchema(module: ModuleType, name: str, schema_type: Sche
     """
     if (func := FindToolEnabledByName(module, name)) is None:
         return None
-    return func.schema.to_json(schema_type)
+    return func.to_json(schema_type)
 
 
 def FindToolEnabledByTag(module: ModuleType, tag: str) -> list[ToolEnabled]:
@@ -86,7 +86,7 @@ def FindToolEnabledByTag(module: ModuleType, tag: str) -> list[ToolEnabled]:
     return [x for x in FindToolEnabled(module) if x.has(tag)]
 
 
-def FindToolEnabledByTagSchemas(module: ModuleType, tag: str, schema_type: SchemaType) -> list[dict]:
+def FindToolEnabledByTagSchemas(module: ModuleType, tag: str, schema_type: SchemaType = SchemaType.OPENAI_API) -> list[dict]:
     """
     Find all function schemas with the EnableTool decorator by tag.
 
@@ -94,7 +94,7 @@ def FindToolEnabledByTagSchemas(module: ModuleType, tag: str, schema_type: Schem
     :param tag: Tag to search for
     :param schema_type: Type of schema to return
     """
-    return [x.schema.to_json(schema_type) for x in FindToolEnabledByTag(module, tag)]
+    return [x.to_json(schema_type) for x in FindToolEnabledByTag(module, tag)]
 
 
 def SaveToolEnabled(module: ModuleType, path: str, schema_type: SchemaType = SchemaType.OPENAI_API):
@@ -248,8 +248,11 @@ class ToolEnabled(Generic[P, T]):
 
         return self.func(*args, **kwargs)
 
-    def gpt_enabled(self) -> bool:
+    def tool_enabled(self) -> bool:
         return True
+
+    def to_json(self, schema_type: SchemaType = SchemaType.OPENAI_API) -> dict:
+        return self.schema.to_json(schema_type)
 
     def has(self, tag: str) -> bool:
         return tag in self.tags

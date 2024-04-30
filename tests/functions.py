@@ -67,8 +67,6 @@ def function_add_enum(a: str):
     :param a: This is a parameter
     """
     return a
-
-
 function_add_enum.schema.add_enum("a", ["YES", "NO", "MAYBE"])
 
 
