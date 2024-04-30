@@ -26,8 +26,9 @@ from . import functions
 def test_FindToolEnabled():
     tools = FindToolEnabled(functions)
     # Check that the function is found
-    assert len(tools) == 7
+    assert len(tools) == 8
     assert functions.function in tools
+    assert functions.function_float in tools
     assert functions.function_tags in tools
     assert functions.function_no_params in tools
     assert functions.function_no_params in tools
@@ -43,8 +44,9 @@ def test_FindToolEnabled():
 def test_FindToolEnabledSchemas():
     tool_schemas = FindToolEnabledSchemas(functions)
     # Check that the function is found
-    assert len(tool_schemas) == 7
+    assert len(tool_schemas) == 8
     assert functions.function.to_json() in tool_schemas
+    assert functions.function_float.to_json() in tool_schemas
     assert functions.function_tags.to_json() in tool_schemas
     assert functions.function_no_params.to_json() in tool_schemas
     assert functions.function_literal.to_json() in tool_schemas
@@ -57,8 +59,9 @@ def test_FindToolEnabledSchemas():
 def test_FindToolEnabledSchemas_with_type(schema_type):
     # Check that the function is found
     tool_schemas = FindToolEnabledSchemas(functions, schema_type=schema_type)
-    assert len(tool_schemas) == 7
+    assert len(tool_schemas) == 8
     assert functions.function.to_json(schema_type) in tool_schemas
+    assert functions.function_float.to_json(schema_type) in tool_schemas
     assert functions.function_tags.to_json(schema_type) in tool_schemas
     assert functions.function_no_params.to_json(schema_type) in tool_schemas
     assert functions.function_literal.to_json(schema_type) in tool_schemas
