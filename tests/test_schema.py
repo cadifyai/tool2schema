@@ -6,23 +6,23 @@ import pytest
 
 import tool2schema
 from tool2schema import (
-    FindGPTEnabled,
-    FindGPTEnabledByName,
-    FindGPTEnabledByTag,
-    FindGPTEnabledSchemas,
-    GPTEnabled,
+    EnableTool,
+    FindToolEnabled,
+    FindToolEnabledByName,
+    FindToolEnabledByTag,
+    FindToolEnabledSchemas,
     SchemaType,
 )
 
 from . import functions
 
 #########################
-#  Test FindGPTEnabled  #
+#  Test FindToolEnabled  #
 #########################
 
 
-def test_FindGPTEnabled():
-    gpt_functions = FindGPTEnabled(functions)
+def test_FindToolEnabled():
+    gpt_functions = FindToolEnabled(functions)
     # Check that the function is found
     assert len(gpt_functions) == 7
     assert functions.function in gpt_functions
@@ -39,12 +39,12 @@ def test_FindGPTEnabled():
 
 
 ################################
-#  Test FindGPTEnabledSchemas  #
+#  Test FindToolEnabledSchemas  #
 ################################
 
 
-def test_FindGPTEnabledSchemas():
-    gpt_schemas = FindGPTEnabledSchemas(functions)
+def test_FindToolEnabledSchemas():
+    gpt_schemas = FindToolEnabledSchemas(functions)
     # Check that the function is found
     assert len(gpt_schemas) == 7
     assert functions.function.schema.to_json() in gpt_schemas
@@ -57,9 +57,9 @@ def test_FindGPTEnabledSchemas():
 
 
 @pytest.mark.parametrize("schema_type", [SchemaType.OPENAI_API, SchemaType.OPENAI_TUNE, SchemaType.ANTHROPIC_CLAUDE])
-def test_FindGPTEnabledSchemas_with_type(schema_type):
+def test_FindToolEnabledSchemas_with_type(schema_type):
     # Check that the function is found
-    gpt_schemas = FindGPTEnabledSchemas(functions, schema_type=schema_type)
+    gpt_schemas = FindToolEnabledSchemas(functions, schema_type=schema_type)
     assert len(gpt_schemas) == 7
     assert functions.function.schema.to_json(schema_type) in gpt_schemas
     assert functions.function_tags.schema.to_json(schema_type) in gpt_schemas
@@ -71,29 +71,29 @@ def test_FindGPTEnabledSchemas_with_type(schema_type):
 
 
 ###############################
-#  Test FindGPTEnabledByName  #
+#  Test FindToolEnabledByName  #
 ###############################
 
 
-def test_FindGPTEnabledByName():
+def test_FindToolEnabledByName():
     # Check that the function is found
-    assert FindGPTEnabledByName(functions, "function") == functions.function
-    assert FindGPTEnabledByName(functions, "function_tags") == functions.function_tags
-    assert FindGPTEnabledByName(functions, "function_no_params") == functions.function_no_params
+    assert FindToolEnabledByName(functions, "function") == functions.function
+    assert FindToolEnabledByName(functions, "function_tags") == functions.function_tags
+    assert FindToolEnabledByName(functions, "function_no_params") == functions.function_no_params
     # Check that the function is not found
-    assert FindGPTEnabledByName(functions, "function_not_enabled") is None
+    assert FindToolEnabledByName(functions, "function_not_enabled") is None
 
 
 ##############################
-#  Test FindGPTEnabledByTag  #
+#  Test FindToolEnabledByTag  #
 ##############################
 
 
-def test_FindGPTEnabledByTag():
+def test_FindToolEnabledByTag():
     # Check that the function is found
-    assert functions.function_tags in FindGPTEnabledByTag(functions, "test")
+    assert functions.function_tags in FindToolEnabledByTag(functions, "test")
     # Check that the function is not found
-    assert functions.function not in FindGPTEnabledByTag(functions, "test")
+    assert functions.function not in FindToolEnabledByTag(functions, "test")
 
 
 ############################################
@@ -240,7 +240,7 @@ class ReferenceSchema:
 ###########################################
 
 
-@GPTEnabled
+@EnableTool
 def function(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
     This is a test function.
@@ -271,7 +271,7 @@ def test_function_tune():
 ########################################
 
 
-@GPTEnabled(tags=["test"])
+@EnableTool(tags=["test"])
 def function_tags(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
     This is a test function.
@@ -302,7 +302,7 @@ def test_function_tags_tune():
 #########################################################
 
 
-@GPTEnabled
+@EnableTool
 def function_enum(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
     This is a test function.
@@ -332,7 +332,7 @@ def test_function_enum():
 #########################################
 
 
-@GPTEnabled
+@EnableTool
 def function_no_params():
     """
     This is a test function.
@@ -361,7 +361,7 @@ def test_function_no_params_tune():
 ##########################################
 
 
-@GPTEnabled
+@EnableTool
 def function_no_description(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
     :param a: This is a parameter
@@ -384,7 +384,7 @@ def test_function_no_description():
 ###################################################
 
 
-@GPTEnabled
+@EnableTool
 def function_no_param_docstrings(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
     This is a test function.
@@ -407,7 +407,7 @@ def test_function_no_param_docstrings():
 #####################################################
 
 
-@GPTEnabled
+@EnableTool
 def function_no_param_descriptions(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
     This is a test function.
@@ -435,7 +435,7 @@ def test_function_no_param_descriptions():
 ########################################
 
 
-@GPTEnabled
+@EnableTool
 def function_no_docstring(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     return a, b, c, d
 
@@ -456,7 +456,7 @@ def test_function_no_docstring():
 #######################################################
 
 
-@GPTEnabled
+@EnableTool
 def function_list_no_type(a: int, b: str, c: bool = False, d: list = [1, 2, 3]):
     """
     This is a test function.
@@ -481,7 +481,7 @@ def test_function_list_no_type():
 ####################################################
 
 
-@GPTEnabled
+@EnableTool
 def function_optional(a: int, b: str, c: bool = False, d: Optional[int] = None):
     """
     This is a test function.
@@ -508,7 +508,7 @@ def test_function_optional():
     assert function_optional.tags == []
 
 
-@GPTEnabled
+@EnableTool
 def function_optional_enum(a: int, b: str, c: bool = False, d: Optional[CustomEnum] = None):
     """
     This is a test function.
@@ -559,7 +559,7 @@ def test_function_optional_enum():
 ##################################################
 
 
-@GPTEnabled
+@EnableTool
 def function_typing_list(a: int, b: str, c: bool = False, d: List[int] = [1, 2, 3]):
     """
     This is a test function.
@@ -583,7 +583,7 @@ def test_function_typing_list():
 ##############################################################
 
 
-@GPTEnabled
+@EnableTool
 def function_typing_list_no_type(a: int, b: str, c: bool = False, d: List = [1, 2, 3]):
     """
     This is a test function.
@@ -609,7 +609,7 @@ def test_function_typing_list_no_type():
 
 
 # Docstring adapted from https://sphinx-rtd-tutorial.readthedocs.io/en/latest/docstrings.html
-@GPTEnabled
+@EnableTool
 def function_docstring(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """Returns a list containing :class:`bluepy.btle.Characteristic`
     objects for the peripheral. If no arguments are given, will return all
@@ -676,7 +676,7 @@ def test_function_docstring():
 ######################################################
 
 
-@GPTEnabled
+@EnableTool
 def function_typing_literal_int(
     a: Literal[1, 2, 3], b: str, c: bool = False, d: list[int] = [1, 2, 3]
 ):
@@ -699,7 +699,7 @@ def test_function_typing_literal_int():
     assert function_typing_literal_int.tags == []
 
 
-@GPTEnabled
+@EnableTool
 def function_typing_literal_string(
     a: Literal["a", "b", "c"], b: str, c: bool = False, d: list[int] = [1, 2, 3]
 ):
@@ -728,7 +728,7 @@ def test_function_typing_literal_string():
 #################################################
 
 
-@GPTEnabled
+@EnableTool
 def function_custom_enum(a: CustomEnum, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
     This is a test function.
@@ -767,7 +767,7 @@ def test_function_custom_enum():
     assert a == CustomEnum.A
 
 
-@GPTEnabled
+@EnableTool
 def function_custom_enum_default_value(
     a: int, b: CustomEnum = CustomEnum.B, c: bool = False, d: list[int] = [1, 2, 3]
 ):
@@ -793,7 +793,7 @@ def test_function_custom_enum_default_value():
     assert function_custom_enum_default_value.tags == []
 
 
-@GPTEnabled
+@EnableTool
 def function_custom_enum_list(
     a: int,
     b: str,
@@ -846,7 +846,7 @@ def test_function_custom_enum_list():
 ###########################
 
 
-@GPTEnabled(ignore_parameters=["a", "d"])
+@EnableTool(ignore_parameters=["a", "d"])
 def function_ignore_parameters(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
     This is a test function.
@@ -874,7 +874,7 @@ def test_function_ignore_parameters():
 #######################################
 
 
-@GPTEnabled(ignore_parameter_descriptions=True)
+@EnableTool(ignore_parameter_descriptions=True)
 def function_ignore_parameter_descriptions(
     a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]
 ):
@@ -903,7 +903,7 @@ def test_function_ignore_parameter_descriptions():
 #####################################
 
 
-@GPTEnabled(ignore_function_description=True)
+@EnableTool(ignore_function_description=True)
 def function_ignore_function_description(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
     This is a test function.
@@ -930,7 +930,7 @@ def test_function_ignore_function_description():
 ###############################
 
 
-@GPTEnabled(ignore_all_parameters=True)
+@EnableTool(ignore_all_parameters=True)
 def function_ignore_all_parameters(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
     This is a test function.
@@ -1039,7 +1039,7 @@ def test_global_configuration_ignore_all_parameters_tune(global_config):
 ########################################
 
 
-@GPTEnabled(ignore_all_parameters=False)
+@EnableTool(ignore_all_parameters=False)
 def function_ignore_all_parameters_override(
     a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]
 ):

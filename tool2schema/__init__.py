@@ -3,13 +3,15 @@ __version__ = "v1.3.1"
 
 from .config import Config
 from .schema import (
-    FindGPTEnabled,
-    FindGPTEnabledByName,
-    FindGPTEnabledByTag,
-    FindGPTEnabledSchemas,
-    GPTEnabled,
-    LoadGPTEnabled,
-    SaveGPTEnabled,
+    EnableTool,
+    FindToolEnabled,
+    FindToolEnabledByName,
+    FindToolEnabledByNameSchema,
+    FindToolEnabledByTag,
+    FindToolEnabledByTagSchemas,
+    FindToolEnabledSchemas,
+    LoadToolEnabled,
+    SaveToolEnabled,
     SchemaType,
 )
 
