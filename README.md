@@ -1,15 +1,21 @@
-# tool2schema
+<div align="center">
+<img src="media/logo.jpg" height=200>
+
+<h1>
+tool2schema
+</h1>
+
+Inspired by [janekb04/py2gpt](https://github.com/janekb04/py2gpt) and [fastai/lm-hackers](https://github.com/fastai/lm-hackers)
 
 [![Check Code](https://github.com/cadifyai/tool2schema/actions/workflows/python-package.yml/badge.svg?branch=main)](https://github.com/cadifyai/tool2schema/actions/workflows/python-package.yml)
 [![Downloads](https://static.pepy.tech/badge/tool2schema)](https://pepy.tech/project/tool2schema)
+![Stars](https://img.shields.io/github/stars/cadifyai/tool2schema)
 
-A library to convert Python functions to schemas supported by the OpenAI API.
-
-Inspired by [janekb04/py2gpt](https://github.com/janekb04/py2gpt) and [fastai/lm-hackers](https://github.com/fastai/lm-hackers).
+</div>
 
 ## Why tool2schema?
 
-The OpenAI API supports [function calling](https://platform.openai.com/docs/guides/function-calling). However, to tell GPT what functions it can call, you must send the functions [in a JSON format](https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools). With `tool2schema`, functions can be automatically converted to the correct JSON schema!
+Sometimes you can provide a large language model (LLM) with functions for it to call, but it needs to follow a specific schema. `tool2schema` is a small depedency-free library that converts your functions into that specific schema. So yeah, it's in the name!
 
 ## Installation
 
@@ -21,10 +27,93 @@ pip3 install tool2schema
 
 ## Usage
 
-On all functions that you would like to get JSON schema for, simply add the `GPTEnabled` decorator.
+On all functions that you would like to get the schema for, simply add the `EnableTool` decorator. Then simply use the return value of `FindToolEnabledSchemas` method directly in your requests to whatever LLM you are using.
 
 ```python
-# my_functions.py
+from tool2schema import EnableTool
+
+@EnableTool
+def my_function1(a: int, b: str = "Hello"):
+    """
+    Example function description.
+
+    :param a: First parameter
+    :param b: Second parameter
+    """
+    # Function code here...
+```
+
+**Note**: To understand the appropriate format required for `tool2schema` to generate the appropriate schema, see the ['How it Works' section](#how-it-works).
+
+### OpenAI
+
+```python
+import my_tools  # Module with your functions
+
+from openai import OpenAI
+from tool2schema import FindToolEnabledSchemas
+
+client = OpenAI()
+completion = client.chat.completions.create(
+  model="gpt-4-turbo",
+  tools=FindToolEnabledSchemas(my_tools)  # <-- As easy as that!
+  messages=[
+    {"role": "system", "content": "You are a helpful assistant."},
+    {"role": "user", "content": "Hello!"}
+  ]
+)
+```
+
+<details>
+<summary><b>If finetuning an OpenAI model, then the schema is slightly different.</b></summary>
+
+```python
+import my_tools  # Module with your functions
+
+from openai import OpenAI
+from tool2schema import FindToolEnabledSchemas, SchemaType
+
+client = OpenAI()
+completion = client.chat.completions.create(
+  model="gpt-4-turbo",
+  tools=FindToolEnabledSchemas(my_tools, SchemaType.OPENAI_TUNE)  # <-- As easy as that!
+  messages=[
+    {"role": "system", "content": "You are a helpful assistant."},
+    {"role": "user", "content": "Hello!"}
+  ]
+)
+```
+
+</details>
+
+### Anthropic
+
+```python
+import my_tools  # Module with your functions
+
+import anthropic
+from tool2schema import FindToolEnabledSchemas, SchemaType
+
+client = anthropic.Anthropic()
+response = client.beta.tools.messages.create(
+    model="claude-3-opus-20240229",
+    tools=FindToolEnabledSchemas(my_tools, SchemaType.ANTHROPIC_CLAUDE), # <-- As easy as that!
+    messages=[{"role": "user", "content": "What's the weather like in San Francisco?"}],
+)
+```
+
+### Mistral
+
+Currently the same as OpenAI.
+
+## Public API
+
+You saw the use of `FindToolEnabledSchemas` above. `tool2schema` has other methods available to help manage your functions. See below for example usage of each of the public API methods that `tool2schema` exposes.
+
+<details>
+<summary><b>The examples assume the existance of this my_functions module.</b></summary>
+
+```python
 from tool2schema import GPTEnabled
 
 @GPTEnabled
@@ -37,6 +126,7 @@ def my_function1(a: int, b: str = "Hello"):
     """
     # Function code here...
 
+
 @GPTEnabled(tags=["tag1"])
 def my_function2(a: int, b: str = "Hello"):
     """
@@ -47,33 +137,34 @@ def my_function2(a: int, b: str = "Hello"):
     """
     # Function code here...
 ```
+</details>
 
-`tool2schema` provides some methods to easily retrieve your functions.
+<br>
 
 ```python
-import my_functions  # Module containing your functions
+import my_functions
 import tool2schema
 
-# Return functions with GPTEnabled decorator
-gpt_enable = tool2schema.FindGPTEnabled(my_functions)
+# Return all functions with the ToolEnable decorator
+functions = tool2schema.FindToolEnabled(my_functions)
+schemas = tool2schema.FindToolEnabledSchemas(my_functions)
 
-# Return all function schemas
-schemas = tool2schema.FindGPTEnabledSchemas(my_functions)
+# Return the function with a ToolEnable decorator and the given name
+function = tool2schema.FindToolEnabledByName(my_functions, "my_function1")
+schema = tool2schema.FindToolEnabledByNameSchema(my_functions, "my_function1")
 
-# Return function with given name
-f = tool2schema.FindGPTEnabledByName(my_functions, "my_function1")
+# Return all functions with a ToolEnable decorator and the given tag
+functions = tool2schema.FindToolEnabledByTag(my_functions, "tag1")
+schemas = tool2schema.FindToolEnabledByTagSchemas(my_functions, "tag1")
 
-# Returns all functions with given tag
-fs = tool2schema.FindGPTEnabledByTag(my_functions, "tag1")
-
-# Saves function schemas to JSON file
-json_path = # Path to JSON file
-tool2schema.SaveGPTEnabled(my_functions, json_path)
+# Save the schemas of all functions with a ToolEnable decorator to a JSON file
+json_path = "path/to/json/file"
+tool2schema.SaveToolEnabled(my_functions, json_path)
 ```
 
 ## How it Works
 
-`tool2schema` uses certain features of your function to correctly populate the schema.
+`tool2schema` uses certain features of your function definition to correctly populate the schema.
 
 - Parameter type hints
 - Parameter default values
