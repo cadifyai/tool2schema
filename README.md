@@ -27,7 +27,7 @@ pip3 install tool2schema
 
 # Usage
 
-On all functions that you would like to get the schema for, simply add the `EnableTool` decorator. Then simply use the return value of `FindToolEnabledSchemas` method directly in your requests to whatever LLM you are using.
+On all functions that you would like to get the schema for, simply add the `EnableTool` decorator. Then use the return value of `FindToolEnabledSchemas` method directly in your requests to whatever LLM you are using.
 
 ```python
 from tool2schema import EnableTool
@@ -108,7 +108,7 @@ Currently the same as OpenAI.
 
 # Public API
 
-In this section we describe in more detail how to utilise this library to it's fullest extent.
+In this section we describe in more detail how to utilise this library to its fullest extent.
 
 ## Configuration
 
@@ -275,7 +275,7 @@ If the enumeration values are not known at the time of defining the function, yo
 
 ```python
 @GPTEnabled
-def my_function(a: int, b: str,):
+def my_function(a: int, b: str):
     """
     Example function description.
 
