@@ -13,11 +13,11 @@ Inspired by [janekb04/py2gpt](https://github.com/janekb04/py2gpt) and [fastai/lm
 
 </div>
 
-## Why tool2schema?
+# Why tool2schema?
 
 Sometimes you can provide a large language model (LLM) with functions for it to call, but it needs to follow a specific schema. `tool2schema` is a small depedency-free library that converts your functions into that specific schema. So yeah, it's in the name!
 
-## Installation
+# Installation
 
 You can install `tool2schema` using `pip`.
 
@@ -25,7 +25,7 @@ You can install `tool2schema` using `pip`.
 pip3 install tool2schema
 ```
 
-## Usage
+# Usage
 
 On all functions that you would like to get the schema for, simply add the `EnableTool` decorator. Then simply use the return value of `FindToolEnabledSchemas` method directly in your requests to whatever LLM you are using.
 
@@ -45,7 +45,7 @@ def my_function1(a: int, b: str = "Hello"):
 
 **Note**: To understand the appropriate format required for `tool2schema` to generate the appropriate schema, see the ['How it Works' section](#how-it-works).
 
-### OpenAI
+## OpenAI
 
 ```python
 import my_tools  # Module with your functions
@@ -86,7 +86,7 @@ completion = client.chat.completions.create(
 
 </details>
 
-### Anthropic
+## Anthropic
 
 ```python
 import my_tools  # Module with your functions
@@ -102,13 +102,52 @@ response = client.beta.tools.messages.create(
 )
 ```
 
-### Mistral
+## Mistral
 
 Currently the same as OpenAI.
 
-## Public API
+# Public API
 
-You saw the use of `FindToolEnabledSchemas` above. `tool2schema` has other methods available to help manage your functions. See below for example usage of each of the public API methods that `tool2schema` exposes.
+In this section we describe in more detail how to utilise this library to it's fullest extent.
+
+## Configuration
+
+There are a number of setting available for you to tweak.
+
+| Name | Description | Default Value |
+|----------|----------|--------------|
+|   `ignore_parameters`  |   A list of parameter names to exclude from the schema  |  `[]`
+|   `ignore_all_parameters`  |   A boolean value indicating whether to exclude all parameters from the schema. When set to true, `ignore_parameters` and `ignore_parameter_descriptions` will be ignored.  | `False` |
+|   `ignore_function_description`  |   A boolean value indicating whether to exclude the function description from the schema.  | `False` |
+|   `ignore_parameter_descriptions`  |   A boolean value indicating whether to exclude all parameter descriptions from the schema  | `False` |
+
+### Decorator Configuration
+
+You can provide the `EnableTool` decorator with the settings listed above.
+
+For example, to omit parameters `b` and `c`:
+
+```python
+@GPTEnabled(ignore_parameters=["b", "c"])
+def my_function(a: int, b: str, c: float):
+    # Function code here...
+```
+
+### Global Configuration
+
+It is also possible to specify the settings globally, so that they apply to all functions
+unless explicitly overridden. It can be done by editing the global configuration as follows:
+
+```python
+import tool2schema
+
+# Ignore all parameters named "a" or "b" by default
+tool2schema.CONFIG.ignore_parameters = ["a", "b"]
+```
+
+## Module Operations
+
+`tool2schema` has methods available to get functions from a module. See below for example usage of each of the public API methods that `tool2schema` exposes.
 
 <details>
 <summary><b>The examples assume the existance of this my_functions module.</b></summary>
@@ -162,115 +201,28 @@ json_path = "path/to/json/file"
 tool2schema.SaveToolEnabled(my_functions, json_path)
 ```
 
-## How it Works
+## Function Schema
 
-`tool2schema` uses certain features of your function definition to correctly populate the schema.
-
-- Parameter type hints
-- Parameter default values
-- Docstring with parameter descriptions
-
-The docstring must be of a specific format. An example function is defined below that utilises all of the above features.
-
-```python
-def my_function(a: int, b: str = "Hello"):
-    """
-    Example function description.
-
-    :param a: First parameter
-    :param b: Second parameter
-    """
-```
-
-To get the schema for this function, simply use the `GPTEnabled` decorator. The decorator will return a class with some additional attributes but can still be called as a function.
-
-The schema of the function be accessed using the `schema` attribute.
-
-```python
-my_function.schema.to_json()
-```
-
-This returns the function schema in JSON format.
-
-### Supported Parameter Types
-
-The following parameter types are supported:
-
-- `int`
-- `float`
-- `str`
-- `bool`
-- `list`
-
-Any other parameter types will be listed as `object` in the schema.
-
-### Enumerations
-
-If you want to limit the possible values of a parameter, you can use a `typing.Literal` type hint or a
-subclass of `enum.Enum`. For example, using `typing.Literal`:
-
-```python
-import typing
-
-
-@GPTEnabled
-def my_function(a: int, b: typing.Literal["yes", "no"]):
-    """
-    Example function description.
-
-    :param a: First parameter
-    :param b: Second parameter
-    """
-    # Function code here...
-```
-
-Equivalent example using `enum.Enum`:
-
-```python
-from enum import Enum
-
-class MyEnum(Enum):
-    YES = 0
-    NO = 1
-
-
-@GPTEnabled
-def my_function(a: int, b: MyEnum):
-    """
-    Example function description.
-
-    :param a: First parameter
-    :param b: Second parameter
-    """
-    # Function code here...
-```
-
-In the case of `Enum` subclasses, note that the schema will include the enumeration names rather than the values.
-In the example above, the schema will include `["YES", "NO"]` rather than `[0, 1]`.
-
-The `@GPTEnabled` decorator also allows to invoke the function using the name of the enum member rather than an
-instance of the class. For example, you may invoke `my_function(1, MyEnum.YES)` as `my_function(1, "YES")`.
-
-If the enumeration values are not known at the time of defining the function,
-you can add them later using the `add_enum` method.
+To get the schema (in JSON format) for a function with the `EnableTool` decorator, either use the methods in the [Method Operations](#module-operations) section, or call the `to_json()` method on the function directly.
 
 ```python
 @GPTEnabled
-def my_function(a: int, b: str,):
+def my_function(a: int):
     """
     Example function description.
 
     :param a: First parameter
-    :param b: Second parameter
     """
     # Function code here...
 
-my_function.schema.add_enum("b", ["yes", "no"])
+my_function.to_json()  # <-- returns the function schema
 ```
 
-### Tags
+**Note**: that the decorator returns a new `ToolEnabled` object with additional attributes, but can be called just like the original function.
 
-The `GPTEnabled` decorator also supports the `tags` keyword argument. This allows you to add tags to your function schema.
+## Function Tags
+
+The `EnableTool` decorator also supports the `tags` keyword argument. This allows you to add tags to your function schema.
 
 ```python
 @GPTEnabled(tags=["tag1", "tag2"])
@@ -296,33 +248,41 @@ You can check if a function has a certain tag using the `has_tag` method.
 my_function.has_tag("tag1")  # True
 ```
 
-### Disable parts of the schema
+# How it Works
 
-You can provide `GPTEnabled` with a number of settings to selectively disable parts of the schema.
-For example, to omit certain parameters:
+`tool2schema` uses certain features of your function definition to correctly populate the schema.
+
+- Parameter type hints
+- Parameter default values
+- Docstring with parameter descriptions
+
+The docstring must be using the [Sphinx docstring](https://sphinx-rtd-tutorial.readthedocs.io/en/latest/docstrings.html) format.
+**Note**: We use the parameter type hints instead of the docstring for parameter types.
+
+## Supported Parameter Types
+
+Most of the common types are supported. See [type_schema.py](./tool2schema/type_schema.py) for more details.
+
+Any parameter types not supported will be listed as `object` in the schema.
+
+## Enumerations
+
+Enumeration in the schema are listed as strings of the enumeration names rather than the values. This was a design choice we felt made more sense for use with LLMs. We introduce some additional pre-processing to ensure that the enumeration name strings are mapped back to the correct enum value. Therefore, `@EnableTool` decorator allows to invoke the function using the name of the enum member rather than an instance of the class. For example, you may invoke `my_function(1, MyEnum.YES)` as `my_function(1, "YES")`. See the code for more details.
+
+> Enumerations are used to explcitly indicate what values are permitted for the parameter value.
+
+If the enumeration values are not known at the time of defining the function, you can add them later using the `add_enum` method.
 
 ```python
-@GPTEnabled(ignore_parameters=["b", "c"])  # b and c will not be included in the schema
-def my_function(a: int, b: str, c: float):
+@GPTEnabled
+def my_function(a: int, b: str,):
+    """
+    Example function description.
+
+    :param a: First parameter
+    :param b: Second parameter
+    """
     # Function code here...
-```
 
-The available settings are:
-- `ignore_parameters`: A list of parameter names to exclude from the schema (defaults to `[]`).
-- `ignore_all_parameters`: A boolean value indicating whether to exclude all parameters from the schema
-  (defaults to `False`). When set to true, all other parameter-related settings (`ignore_parameters` and
-  `ignore_parameter_descriptions`) will be ignored.
-- `ignore_function_description`: A boolean value indicating whether to exclude the function description from
-  the schema (defaults to `False`).
-- `ignore_parameter_descriptions`: A boolean value indicating whether to exclude all parameter descriptions
-  from the schema (defaults to `False`).
-
-It is also possible to specify the settings globally, so that they apply to all functions
-unless explicitly overridden. It can be done by editing the global configuration as follows:
-
-```python
-import tool2schema
-
-# Ignore all parameters named "a" or "b" by default
-tool2schema.CONFIG.ignore_parameters = ["a", "b"]
+my_function.schema.add_enum("b", ["yes", "no"])  #  <-- Add enum values for parameter 'b'
 ```
