@@ -29,69 +29,92 @@ class SchemaType(Enum):
     ANTHROPIC_CLAUDE = 2
 
 
-def FindGPTEnabled(module: ModuleType) -> list[ToolEnabled]:
+def FindToolEnabled(module: ModuleType) -> list[ToolEnabled]:
     """
-    Find all functions with the GPTEnabled decorator.
+    Find all functions with the EnableTool decorator.
 
-    :param module: Module to search for GPTEnabled functions
+    :param module: Module to search for ToolEnabled functions
     """
-    return [x for x in module.__dict__.values() if hasattr(x, "gpt_enabled")]
+    return [x for x in module.__dict__.values() if hasattr(x, "tool_enabled")]
 
 
-def FindGPTEnabledSchemas(
+def FindToolEnabledSchemas(
     module: ModuleType, schema_type: SchemaType = SchemaType.OPENAI_API
 ) -> list[dict]:
     """
-    Find all function schemas with the GPTEnabled decorator.
+    Find all function schemas with the EnableTool decorator.
 
-    :param module: Module to search for GPTEnabled functions
+    :param module: Module to search for ToolEnabled functions
     :param schema_type: Type of schema to return
     """
-    return [x.schema.to_json(schema_type) for x in FindGPTEnabled(module)]
+    return [x.to_json(schema_type) for x in FindToolEnabled(module)]
 
 
-def FindGPTEnabledByName(module: ModuleType, name: str) -> Optional[ToolEnabled]:
+def FindToolEnabledByName(module: ModuleType, name: str) -> Optional[ToolEnabled]:
     """
-    Find a function with the GPTEnabled decorator by name.
+    Find a function with the EnableTool decorator by name.
 
-    :param module: Module to search for GPTEnabled functions
+    :param module: Module to search for ToolEnabled functions
     :param name: Name of the function to find
     """
-    for func in FindGPTEnabled(module):
+    for func in FindToolEnabled(module):
         if func.__name__ == name:
             return func
     return None
 
 
-def FindGPTEnabledByTag(module: ModuleType, tag: str) -> list[ToolEnabled]:
+def FindToolEnabledByNameSchema(module: ModuleType, name: str, schema_type: SchemaType = SchemaType.OPENAI_API) -> Optional[dict]:
     """
-    Find all functions with the GPTEnabled decorator by tag.
+    Find a function schema with the EnableTool decorator by name.
 
-    :param module: Module to search for GPTEnabled functions
+    :param module: Module to search for ToolEnabled functions
+    :param name: Name of the function to find
+    :param schema_type: Type of schema to return
+    """
+    if (func := FindToolEnabledByName(module, name)) is None:
+        return None
+    return func.to_json(schema_type)
+
+
+def FindToolEnabledByTag(module: ModuleType, tag: str) -> list[ToolEnabled]:
+    """
+    Find all functions with the EnableTool decorator by tag.
+
+    :param module: Module to search for ToolEnabled functions
     :param tag: Tag to search for
     """
-    return [x for x in FindGPTEnabled(module) if x.has(tag)]
+    return [x for x in FindToolEnabled(module) if x.has(tag)]
 
 
-def SaveGPTEnabled(module: ModuleType, path: str, schema_type: SchemaType = SchemaType.OPENAI_API):
+def FindToolEnabledByTagSchemas(module: ModuleType, tag: str, schema_type: SchemaType = SchemaType.OPENAI_API) -> list[dict]:
     """
-    Save all function schemas with the GPTEnabled decorator to a file.
+    Find all function schemas with the EnableTool decorator by tag.
 
-    :param module: Module to search for GPTEnabled functions
+    :param module: Module to search for ToolEnabled functions
+    :param tag: Tag to search for
+    :param schema_type: Type of schema to return
+    """
+    return [x.to_json(schema_type) for x in FindToolEnabledByTag(module, tag)]
+
+
+def SaveToolEnabled(module: ModuleType, path: str, schema_type: SchemaType = SchemaType.OPENAI_API):
+    """
+    Save all function schemas with the EnableTool decorator to a file.
+
+    :param module: Module to search for ToolEnabled functions
     :param path: Path to save the schemas to
     :param schema_type: Type of schema to return
     """
-    schemas = FindGPTEnabledSchemas(module, schema_type)
+    schemas = FindToolEnabledSchemas(module, schema_type)
     json.dump(schemas, open(path, "w"))
 
 
 class ParseException(Exception):
     """Exception for schema parsing errors."""
-
     pass
 
 
-def LoadGPTEnabled(
+def LoadToolEnabled(
     module: ModuleType,
     function: dict,
     validate: bool = True,
@@ -99,7 +122,7 @@ def LoadGPTEnabled(
 ) -> tuple[Callable, dict[str, Any]]:
     """
     Given a function dictionary containing the name of a function and the arguments to pass to it,
-    retrieve the corresponding function among those with the `GPTEnabled` decorator defined in
+    retrieve the corresponding function among those with the `EnableTool` decorator defined in
     `module`. When `validate` is true, validate the arguments and raise `ParseException` if the
     arguments are not valid (see more information below).
 
@@ -112,7 +135,7 @@ def LoadGPTEnabled(
         an exception is raised if any hallucinated arguments are found. `validate` must be true.
     :return: A tuple consisting of the function and a dictionary of argument values
     :raises ParseException: Thrown when any of the following conditions is met:
-        - Function isn't defined in the given module, or is not decorated with `GPTEnabled`
+        - Function isn't defined in the given module, or is not decorated with `EnableTool`
         - The arguments are given as string and the string is not valid, meaning it is:
             - Not parsable as JSON, or;
             - Is not parsed into a dictionary of argument values
@@ -147,13 +170,13 @@ def LoadGPTEnabled(
         # Invalid type
         raise ParseException(f"Arguments cannot be of type {type(arguments)}")
 
-    f = FindGPTEnabledByName(module, name)
+    f = FindToolEnabledByName(module, name)
 
     if not f:
         # A function with the given name was not found
         raise ParseException(
             f"Function with name '{name}' is not defined in given module "
-            f"'{module.__name__}' or is missing 'GPTEnabled' decorator"
+            f"'{module.__name__}' or is missing 'EnableTool' decorator"
         )
 
     if validate:
@@ -168,7 +191,7 @@ def _validate_arguments(f: ToolEnabled, arguments: dict, ignore_hallucinations: 
     Raise an exception if any of these conditions is not met, or if there are any hallucinated
     arguments and `ignore_hallucinations` is false.
 
-    :param f: A GPTEnabled-decorated function
+    :param f: A EnableTool-decorated function
     :param arguments: Arguments to validate
     :param ignore_hallucinations: Whether to ignore hallucinated arguments or throw an exception
         if any are present
@@ -225,22 +248,25 @@ class ToolEnabled(Generic[P, T]):
 
         return self.func(*args, **kwargs)
 
-    def gpt_enabled(self) -> bool:
+    def tool_enabled(self) -> bool:
         return True
+
+    def to_json(self, schema_type: SchemaType = SchemaType.OPENAI_API) -> dict:
+        return self.schema.to_json(schema_type)
 
     def has(self, tag: str) -> bool:
         return tag in self.tags
 
 
 @overload
-def GPTEnabled(func: Callable[P, T], **kwargs) -> ToolEnabled[P, T]: ...
+def EnableTool(func: Callable[P, T], **kwargs) -> ToolEnabled[P, T]: ...
 
 
 @overload
-def GPTEnabled(**kwargs) -> Callable[[Callable[P, T]], ToolEnabled[P, T]]: ...
+def EnableTool(**kwargs) -> Callable[[Callable[P, T]], ToolEnabled[P, T]]: ...
 
 
-def GPTEnabled(func=None, **kwargs):
+def EnableTool(func=None, **kwargs):
     """Decorator to generate a function schema for OpenAI."""
     if func is not None:
         return ToolEnabled(func, **kwargs)

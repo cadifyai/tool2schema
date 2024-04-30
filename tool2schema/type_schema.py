@@ -10,7 +10,7 @@ from typing import Literal, Optional, Type, Union
 TYPE_SCHEMAS: list[Type[TypeSchema]] = []
 
 
-def GPTTypeSchema(cls: Type[TypeSchema]):
+def ToolTypeSchema(cls: Type[TypeSchema]):
     """
     Decorator to register a type schema class.
     """
@@ -120,7 +120,7 @@ class TypeSchema:
         return {f: v for f, v in fields.items() if v != Parameter.empty}
 
 
-@GPTTypeSchema
+@ToolTypeSchema
 class ValueTypeSchema(TypeSchema):
     """
     Type schema for value types.
@@ -166,7 +166,7 @@ class GenericTypeSchema(TypeSchema):
             return args[0]
 
 
-@GPTTypeSchema
+@ToolTypeSchema
 class ListTypeSchema(GenericTypeSchema):
     """
     Type schema for list (array) types, including typing.List.
@@ -207,7 +207,7 @@ class ListTypeSchema(GenericTypeSchema):
         return True
 
 
-@GPTTypeSchema
+@ToolTypeSchema
 class UnionTypeSchema(GenericTypeSchema):
     """
     Type schema for typing.Optional types.
@@ -266,7 +266,7 @@ class EnumTypeSchema(TypeSchema):
         return value in self.enum_values
 
 
-@GPTTypeSchema
+@ToolTypeSchema
 class EnumClassTypeSchema(EnumTypeSchema):
     """
     Type schema for enum.Enum types.
@@ -301,7 +301,7 @@ class EnumClassTypeSchema(EnumTypeSchema):
         return value
 
 
-@GPTTypeSchema
+@ToolTypeSchema
 class LiteralTypeSchema(EnumTypeSchema):
     """
     Type schema for typing.Literal types.

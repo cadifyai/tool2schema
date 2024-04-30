@@ -1,10 +1,10 @@
 import typing
 from enum import Enum
 
-from tool2schema import GPTEnabled
+from tool2schema import EnableTool
 
 
-@GPTEnabled
+@EnableTool
 def function_no_params():
     """
     This is a test function.
@@ -12,7 +12,7 @@ def function_no_params():
     return None
 
 
-@GPTEnabled
+@EnableTool
 def function(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
     This is a test function.
@@ -25,7 +25,7 @@ def function(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     return a, b, c, d
 
 
-@GPTEnabled(tags=["test"])
+@EnableTool(tags=["test"])
 def function_tags(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
     This is a test function.
@@ -48,7 +48,7 @@ def function_not_enabled(a: int, b: str) -> None:
     pass
 
 
-@GPTEnabled
+@EnableTool
 def function_literal(a: typing.Literal[0, 1, 2], b: typing.Literal["a", "b", "c"] = "a"):
     """
     This is a test function.
@@ -59,7 +59,7 @@ def function_literal(a: typing.Literal[0, 1, 2], b: typing.Literal["a", "b", "c"
     return a, b
 
 
-@GPTEnabled
+@EnableTool
 def function_add_enum(a: str):
     """
     This is a test function.
@@ -67,8 +67,6 @@ def function_add_enum(a: str):
     :param a: This is a parameter
     """
     return a
-
-
 function_add_enum.schema.add_enum("a", ["YES", "NO", "MAYBE"])
 
 
@@ -82,7 +80,7 @@ class CustomEnum(Enum):
     Z = 2
 
 
-@GPTEnabled
+@EnableTool
 def function_enum(a: CustomEnum):
     """
     This is a test function.
@@ -92,7 +90,7 @@ def function_enum(a: CustomEnum):
     return a
 
 
-@GPTEnabled
+@EnableTool
 def function_union(a: typing.Optional[bool], b: typing.Union[str, int] = 4):
     """
     This is a test function.
