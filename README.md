@@ -120,6 +120,7 @@ There are a number of setting available for you to tweak.
 |   `ignore_all_parameters`  |   A boolean value indicating whether to exclude all parameters from the schema. When set to true, `ignore_parameters` and `ignore_parameter_descriptions` will be ignored.  | `False` |
 |   `ignore_function_description`  |   A boolean value indicating whether to exclude the function description from the schema.  | `False` |
 |   `ignore_parameter_descriptions`  |   A boolean value indicating whether to exclude all parameter descriptions from the schema  | `False` |
+| `schema_type` | Default schema type to use. | `SchemaType.OPENAI_API` |
 
 ### Decorator Configuration
 

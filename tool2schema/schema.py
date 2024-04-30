@@ -6,27 +6,18 @@ import inspect
 import json
 import re
 import sys
-from enum import Enum
 from inspect import Parameter
 from types import ModuleType
 from typing import Any, Callable, Generic, Optional, TypeVar, overload
 
 import tool2schema
-from tool2schema.config import Config
+from tool2schema.config import Config, SchemaType
 from tool2schema.parameter_schema import ParameterSchema
 
 if sys.version_info < (3, 10):
     from typing_extensions import ParamSpec
 else:
     from typing import ParamSpec
-
-
-class SchemaType(Enum):
-    """Enum for schema types."""
-
-    OPENAI_API = 0
-    OPENAI_TUNE = 1
-    ANTHROPIC_CLAUDE = 2
 
 
 def FindToolEnabled(module: ModuleType) -> list[ToolEnabled]:
@@ -39,13 +30,13 @@ def FindToolEnabled(module: ModuleType) -> list[ToolEnabled]:
 
 
 def FindToolEnabledSchemas(
-    module: ModuleType, schema_type: SchemaType = SchemaType.OPENAI_API
+    module: ModuleType, schema_type: Optional[SchemaType] = None
 ) -> list[dict]:
     """
     Find all function schemas with the EnableTool decorator.
 
     :param module: Module to search for ToolEnabled functions
-    :param schema_type: Type of schema to return
+    :param schema_type: Type of schema to return (None indicates default)
     """
     return [x.to_json(schema_type) for x in FindToolEnabled(module)]
 
@@ -63,13 +54,15 @@ def FindToolEnabledByName(module: ModuleType, name: str) -> Optional[ToolEnabled
     return None
 
 
-def FindToolEnabledByNameSchema(module: ModuleType, name: str, schema_type: SchemaType = SchemaType.OPENAI_API) -> Optional[dict]:
+def FindToolEnabledByNameSchema(
+    module: ModuleType, name: str, schema_type: Optional[SchemaType] = None
+) -> Optional[dict]:
     """
     Find a function schema with the EnableTool decorator by name.
 
     :param module: Module to search for ToolEnabled functions
     :param name: Name of the function to find
-    :param schema_type: Type of schema to return
+    :param schema_type: Type of schema to return (None indicates default)
     """
     if (func := FindToolEnabledByName(module, name)) is None:
         return None
@@ -86,24 +79,26 @@ def FindToolEnabledByTag(module: ModuleType, tag: str) -> list[ToolEnabled]:
     return [x for x in FindToolEnabled(module) if x.has(tag)]
 
 
-def FindToolEnabledByTagSchemas(module: ModuleType, tag: str, schema_type: SchemaType = SchemaType.OPENAI_API) -> list[dict]:
+def FindToolEnabledByTagSchemas(
+    module: ModuleType, tag: str, schema_type: Optional[SchemaType] = None
+) -> list[dict]:
     """
     Find all function schemas with the EnableTool decorator by tag.
 
     :param module: Module to search for ToolEnabled functions
     :param tag: Tag to search for
-    :param schema_type: Type of schema to return
+    :param schema_type: Type of schema to return (None indicates default)
     """
     return [x.to_json(schema_type) for x in FindToolEnabledByTag(module, tag)]
 
 
-def SaveToolEnabled(module: ModuleType, path: str, schema_type: SchemaType = SchemaType.OPENAI_API):
+def SaveToolEnabled(module: ModuleType, path: str, schema_type: Optional[SchemaType] = None):
     """
     Save all function schemas with the EnableTool decorator to a file.
 
     :param module: Module to search for ToolEnabled functions
     :param path: Path to save the schemas to
-    :param schema_type: Type of schema to return
+    :param schema_type: Type of schema to return (None indicates default)
     """
     schemas = FindToolEnabledSchemas(module, schema_type)
     json.dump(schemas, open(path, "w"))
@@ -251,7 +246,13 @@ class ToolEnabled(Generic[P, T]):
     def tool_enabled(self) -> bool:
         return True
 
-    def to_json(self, schema_type: SchemaType = SchemaType.OPENAI_API) -> dict:
+    def to_json(self, schema_type: Optional[SchemaType] = None) -> dict:
+        """
+        Return JSON schema for the function.
+
+        :param schema_type: None indicates default schema type
+        :return: JSON schema
+        """
         return self.schema.to_json(schema_type)
 
     def has(self, tag: str) -> bool:
@@ -292,11 +293,12 @@ class FunctionSchema:
         self.config = config
         self._all_parameter_schemas: dict[str, ParameterSchema] = self._get_all_parameter_schemas()
 
-    def to_json(self, schema_type: SchemaType = SchemaType.OPENAI_API) -> dict:
+    def to_json(self, schema_type: Optional[SchemaType] = None) -> dict:
         """
         Convert schema to JSON.
         :param schema_type: Type of schema to return
         """
+        schema_type = schema_type or self.config.schema_type
         if schema_type == SchemaType.OPENAI_TUNE:
             return self._get_function_schema(schema_type)
         elif schema_type == SchemaType.ANTHROPIC_CLAUDE:

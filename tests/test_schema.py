@@ -1065,6 +1065,15 @@ def test_global_configuration_ignore_all_parameters_tune(global_config):
     assert function.tags == []
 
 
+def test_global_configuration_schema_type(global_config):
+    # Change the global configuration
+    tool2schema.CONFIG.schema_type = SchemaType.OPENAI_TUNE
+
+    rf = ReferenceSchema(function)
+    assert function.to_json() == rf.tune_schema
+    assert function.tags == []
+
+
 ########################################
 #  Test global configuration override  #
 ########################################
