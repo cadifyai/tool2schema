@@ -139,6 +139,9 @@ class ValueTypeSchema(TypeSchema):
         return True
 
     def validate(self, value) -> bool:
+        # Allow implicit conversion from int to float
+        if self.type is float and type(value) is int:
+            return True
         return self.type == type(value)
 
     def _get_type(self) -> dict:

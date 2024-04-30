@@ -13,6 +13,16 @@ def function_no_params():
 
 
 @EnableTool
+def function_float(a: float):
+    """
+    This is a test function.
+
+    :param a: This is a parameter
+    """
+    return a
+
+
+@EnableTool
 def function(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
     This is a test function.

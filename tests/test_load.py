@@ -139,3 +139,12 @@ def test_load_invalid_argument_values(function, arguments):
     f, args = LoadToolEnabled(functions, f_obj, validate=False)
     assert f == function
     assert args == arguments
+
+################################################
+#  Test implicit conversion from int to float  #
+################################################
+
+def test_function_float():
+    f, args = LoadToolEnabled(functions, get_function_dict(functions.function_float, {"a": 1}))
+    assert f == functions.function_float
+    assert args == {"a": 1}
