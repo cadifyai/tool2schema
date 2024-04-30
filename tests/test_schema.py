@@ -6,94 +6,125 @@ import pytest
 
 import tool2schema
 from tool2schema import (
-    FindGPTEnabled,
-    FindGPTEnabledByName,
-    FindGPTEnabledByTag,
-    FindGPTEnabledSchemas,
-    GPTEnabled,
+    EnableTool,
+    FindToolEnabled,
+    FindToolEnabledByName,
+    FindToolEnabledByNameSchema,
+    FindToolEnabledByTag,
+    FindToolEnabledByTagSchemas,
+    FindToolEnabledSchemas,
     SchemaType,
 )
 
 from . import functions
 
-#########################
-#  Test FindGPTEnabled  #
-#########################
+##################################
+#  Test FindToolEnabled/Schemas  #
+##################################
 
 
-def test_FindGPTEnabled():
-    gpt_functions = FindGPTEnabled(functions)
+def test_FindToolEnabled():
+    tools = FindToolEnabled(functions)
     # Check that the function is found
-    assert len(gpt_functions) == 7
-    assert functions.function in gpt_functions
-    assert functions.function_tags in gpt_functions
-    assert functions.function_no_params in gpt_functions
-    assert functions.function_no_params in gpt_functions
-    assert functions.function_no_params in gpt_functions
-    assert functions.function_literal in gpt_functions
-    assert functions.function_add_enum in gpt_functions
-    assert functions.function_enum in gpt_functions
-    assert functions.function_union in gpt_functions
+    assert len(tools) == 7
+    assert functions.function in tools
+    assert functions.function_tags in tools
+    assert functions.function_no_params in tools
+    assert functions.function_no_params in tools
+    assert functions.function_no_params in tools
+    assert functions.function_literal in tools
+    assert functions.function_add_enum in tools
+    assert functions.function_enum in tools
+    assert functions.function_union in tools
     # Check that the function is not found
-    assert functions.function_not_enabled not in gpt_functions
+    assert functions.function_not_enabled not in tools
 
 
-################################
-#  Test FindGPTEnabledSchemas  #
-################################
-
-
-def test_FindGPTEnabledSchemas():
-    gpt_schemas = FindGPTEnabledSchemas(functions)
+def test_FindToolEnabledSchemas():
+    tool_schemas = FindToolEnabledSchemas(functions)
     # Check that the function is found
-    assert len(gpt_schemas) == 7
-    assert functions.function.schema.to_json() in gpt_schemas
-    assert functions.function_tags.schema.to_json() in gpt_schemas
-    assert functions.function_no_params.schema.to_json() in gpt_schemas
-    assert functions.function_literal.schema.to_json() in gpt_schemas
-    assert functions.function_add_enum.schema.to_json() in gpt_schemas
-    assert functions.function_enum.schema.to_json() in gpt_schemas
-    assert functions.function_union.schema.to_json() in gpt_schemas
+    assert len(tool_schemas) == 7
+    assert functions.function.to_json() in tool_schemas
+    assert functions.function_tags.to_json() in tool_schemas
+    assert functions.function_no_params.to_json() in tool_schemas
+    assert functions.function_literal.to_json() in tool_schemas
+    assert functions.function_add_enum.to_json() in tool_schemas
+    assert functions.function_enum.to_json() in tool_schemas
+    assert functions.function_union.to_json() in tool_schemas
 
 
-@pytest.mark.parametrize("schema_type", [SchemaType.OPENAI_API, SchemaType.OPENAI_TUNE, SchemaType.ANTHROPIC_CLAUDE])
-def test_FindGPTEnabledSchemas_with_type(schema_type):
+@pytest.mark.parametrize("schema_type", [schema for schema in SchemaType])
+def test_FindToolEnabledSchemas_with_type(schema_type):
     # Check that the function is found
-    gpt_schemas = FindGPTEnabledSchemas(functions, schema_type=schema_type)
-    assert len(gpt_schemas) == 7
-    assert functions.function.schema.to_json(schema_type) in gpt_schemas
-    assert functions.function_tags.schema.to_json(schema_type) in gpt_schemas
-    assert functions.function_no_params.schema.to_json(schema_type) in gpt_schemas
-    assert functions.function_literal.schema.to_json(schema_type) in gpt_schemas
-    assert functions.function_add_enum.schema.to_json(schema_type) in gpt_schemas
-    assert functions.function_enum.schema.to_json(schema_type) in gpt_schemas
-    assert functions.function_union.schema.to_json(schema_type) in gpt_schemas
+    tool_schemas = FindToolEnabledSchemas(functions, schema_type=schema_type)
+    assert len(tool_schemas) == 7
+    assert functions.function.to_json(schema_type) in tool_schemas
+    assert functions.function_tags.to_json(schema_type) in tool_schemas
+    assert functions.function_no_params.to_json(schema_type) in tool_schemas
+    assert functions.function_literal.to_json(schema_type) in tool_schemas
+    assert functions.function_add_enum.to_json(schema_type) in tool_schemas
+    assert functions.function_enum.to_json(schema_type) in tool_schemas
+    assert functions.function_union.to_json(schema_type) in tool_schemas
 
 
-###############################
-#  Test FindGPTEnabledByName  #
-###############################
+#######################################
+#  Test FindToolEnabledByName/Schema  #
+#######################################
 
 
-def test_FindGPTEnabledByName():
+def test_FindToolEnabledByName():
     # Check that the function is found
-    assert FindGPTEnabledByName(functions, "function") == functions.function
-    assert FindGPTEnabledByName(functions, "function_tags") == functions.function_tags
-    assert FindGPTEnabledByName(functions, "function_no_params") == functions.function_no_params
+    assert FindToolEnabledByName(functions, "function") == functions.function
+    assert FindToolEnabledByName(functions, "function_tags") == functions.function_tags
+    assert FindToolEnabledByName(functions, "function_no_params") == functions.function_no_params
     # Check that the function is not found
-    assert FindGPTEnabledByName(functions, "function_not_enabled") is None
+    assert FindToolEnabledByName(functions, "function_not_enabled") is None
 
 
-##############################
-#  Test FindGPTEnabledByTag  #
-##############################
-
-
-def test_FindGPTEnabledByTag():
+def test_FindToolEnabledByNameSchemas():
     # Check that the function is found
-    assert functions.function_tags in FindGPTEnabledByTag(functions, "test")
+    assert FindToolEnabledByNameSchema(functions, "function") == functions.function.to_json()
+    assert FindToolEnabledByNameSchema(functions, "function_tags") == functions.function_tags.to_json()
+    assert FindToolEnabledByNameSchema(functions, "function_no_params") == functions.function_no_params.to_json()
     # Check that the function is not found
-    assert functions.function not in FindGPTEnabledByTag(functions, "test")
+    assert FindToolEnabledByName(functions, "function_not_enabled") is None
+
+
+@pytest.mark.parametrize("schema_type", [schema for schema in SchemaType])
+def test_FindToolEnabledByNameSchemas_with_type(schema_type):
+    # Check that the function is found
+    assert FindToolEnabledByNameSchema(functions, "function", schema_type=schema_type) == functions.function.to_json(schema_type)
+    assert FindToolEnabledByNameSchema(functions, "function_tags", schema_type=schema_type) == functions.function_tags.to_json(schema_type)
+    assert FindToolEnabledByNameSchema(functions, "function_no_params", schema_type=schema_type) == functions.function_no_params.to_json(schema_type)
+    # Check that the function is not found
+    assert FindToolEnabledByNameSchema(functions, "function_not_enabled", schema_type=schema_type) is None
+
+
+######################################
+#  Test FindToolEnabledByTag/Schema  #
+######################################
+
+
+def test_FindToolEnabledByTag():
+    # Check that the function is found
+    assert functions.function_tags in FindToolEnabledByTag(functions, "test")
+    # Check that the function is not found
+    assert functions.function not in FindToolEnabledByTag(functions, "test")
+
+
+def test_FindToolEnabledByTagSchemas():
+    # Check that the function is found
+    assert FindToolEnabledByTagSchemas(functions, "test") == [functions.function_tags.to_json()]
+    # Check that the function is not found
+    assert functions.function.to_json() not in FindToolEnabledByTagSchemas(functions, "test")
+
+
+@pytest.mark.parametrize("schema_type", [schema for schema in SchemaType])
+def test_FindToolEnabledByTagSchemas_with_type(schema_type):
+    # Check that the function is found
+    assert FindToolEnabledByTagSchemas(functions, "test", schema_type=schema_type) == [functions.function_tags.to_json(schema_type)]
+    # Check that the function is not found
+    assert functions.function.to_json(schema_type) not in FindToolEnabledByTagSchemas(functions, "test", schema_type=schema_type)
 
 
 ############################################
@@ -240,7 +271,7 @@ class ReferenceSchema:
 ###########################################
 
 
-@GPTEnabled
+@EnableTool
 def function(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
     This is a test function.
@@ -255,14 +286,14 @@ def function(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
 
 def test_function():
     rf = ReferenceSchema(function)
-    assert function.schema.to_json() == rf.schema
+    assert function.to_json() == rf.schema
     assert function.tags == []
 
 
 def test_function_tune():
     rf = ReferenceSchema(function)
-    assert function.schema.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
-    assert function.schema.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
+    assert function.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
+    assert function.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
     assert function.tags == []
 
 
@@ -271,7 +302,7 @@ def test_function_tune():
 ########################################
 
 
-@GPTEnabled(tags=["test"])
+@EnableTool(tags=["test"])
 def function_tags(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
     This is a test function.
@@ -286,14 +317,14 @@ def function_tags(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
 
 def test_function_tags():
     rf = ReferenceSchema(function_tags)
-    assert function_tags.schema.to_json() == rf.schema
+    assert function_tags.to_json() == rf.schema
     assert function_tags.tags == ["test"]
 
 
 def test_function_tags_tune():
     rf = ReferenceSchema(function_tags)
-    assert function_tags.schema.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
-    assert function_tags.schema.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
+    assert function_tags.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
+    assert function_tags.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
     assert function_tags.tags == ["test"]
 
 
@@ -302,7 +333,7 @@ def test_function_tags_tune():
 #########################################################
 
 
-@GPTEnabled
+@EnableTool
 def function_enum(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
     This is a test function.
@@ -321,9 +352,9 @@ function_enum.schema.add_enum("a", [1, 2, 3])  # noqa
 def test_function_enum():
     rf = ReferenceSchema(function_enum)
     rf.get_param("a")["enum"] = [1, 2, 3]
-    assert function_enum.schema.to_json() == rf.schema
-    assert function_enum.schema.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
-    assert function_enum.schema.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
+    assert function_enum.to_json() == rf.schema
+    assert function_enum.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
+    assert function_enum.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
     assert function_enum.tags == []
 
 
@@ -332,7 +363,7 @@ def test_function_enum():
 #########################################
 
 
-@GPTEnabled
+@EnableTool
 def function_no_params():
     """
     This is a test function.
@@ -343,7 +374,7 @@ def function_no_params():
 def test_function_no_params():
     rf = ReferenceSchema(function_no_params)
     rf.get_function().pop("parameters")
-    assert function_no_params.schema.to_json() == rf.schema
+    assert function_no_params.to_json() == rf.schema
     assert function_no_params.tags == []
 
 
@@ -351,8 +382,8 @@ def test_function_no_params_tune():
     rf = ReferenceSchema(function_no_params)
     rf.get_parameters().pop("required")
     rf.get_parameters()["properties"] = {}
-    assert function_no_params.schema.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
-    assert function_no_params.schema.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
+    assert function_no_params.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
+    assert function_no_params.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
     assert function_no_params.tags == []
 
 
@@ -361,7 +392,7 @@ def test_function_no_params_tune():
 ##########################################
 
 
-@GPTEnabled
+@EnableTool
 def function_no_description(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
     :param a: This is a parameter
@@ -375,7 +406,7 @@ def function_no_description(a: int, b: str, c: bool = False, d: list[int] = [1, 
 def test_function_no_description():
     rf = ReferenceSchema(function_no_description)
     rf.get_function()["description"] = ""
-    assert function_no_description.schema.to_json() == rf.schema
+    assert function_no_description.to_json() == rf.schema
     assert function_no_description.tags == []
 
 
@@ -384,7 +415,7 @@ def test_function_no_description():
 ###################################################
 
 
-@GPTEnabled
+@EnableTool
 def function_no_param_docstrings(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
     This is a test function.
@@ -398,7 +429,7 @@ def test_function_no_param_docstrings():
     for p in rf.get_parameters()["properties"]:
         rf.get_param(p).pop("description")
 
-    assert function_no_param_docstrings.schema.to_json() == rf.schema
+    assert function_no_param_docstrings.to_json() == rf.schema
     assert function_no_param_docstrings.tags == []
 
 
@@ -407,7 +438,7 @@ def test_function_no_param_docstrings():
 #####################################################
 
 
-@GPTEnabled
+@EnableTool
 def function_no_param_descriptions(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
     This is a test function.
@@ -426,7 +457,7 @@ def test_function_no_param_descriptions():
     for p in rf.get_parameters()["properties"]:
         rf.get_param(p).pop("description")
 
-    assert function_no_param_descriptions.schema.to_json() == rf.schema
+    assert function_no_param_descriptions.to_json() == rf.schema
     assert function_no_param_descriptions.tags == []
 
 
@@ -435,7 +466,7 @@ def test_function_no_param_descriptions():
 ########################################
 
 
-@GPTEnabled
+@EnableTool
 def function_no_docstring(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     return a, b, c, d
 
@@ -447,7 +478,7 @@ def test_function_no_docstring():
     for p in rf.get_parameters()["properties"]:
         rf.get_param(p).pop("description")
 
-    assert function_no_docstring.schema.to_json() == rf.schema
+    assert function_no_docstring.to_json() == rf.schema
     assert function_no_docstring.tags == []
 
 
@@ -456,7 +487,7 @@ def test_function_no_docstring():
 #######################################################
 
 
-@GPTEnabled
+@EnableTool
 def function_list_no_type(a: int, b: str, c: bool = False, d: list = [1, 2, 3]):
     """
     This is a test function.
@@ -472,7 +503,7 @@ def function_list_no_type(a: int, b: str, c: bool = False, d: list = [1, 2, 3]):
 def test_function_list_no_type():
     rf = ReferenceSchema(function_list_no_type)
     rf.get_param("d").pop("items")
-    assert function_list_no_type.schema.to_json() == rf.schema
+    assert function_list_no_type.to_json() == rf.schema
     assert function_list_no_type.tags == []
 
 
@@ -481,7 +512,7 @@ def test_function_list_no_type():
 ####################################################
 
 
-@GPTEnabled
+@EnableTool
 def function_optional(a: int, b: str, c: bool = False, d: Optional[int] = None):
     """
     This is a test function.
@@ -504,11 +535,11 @@ def test_function_optional():
             "default": None,
         },
     )
-    assert function_optional.schema.to_json() == rf.schema
+    assert function_optional.to_json() == rf.schema
     assert function_optional.tags == []
 
 
-@GPTEnabled
+@EnableTool
 def function_optional_enum(a: int, b: str, c: bool = False, d: Optional[CustomEnum] = None):
     """
     This is a test function.
@@ -532,7 +563,7 @@ def test_function_optional_enum():
         },
     )
 
-    assert function_optional_enum.schema.to_json() == rf.schema
+    assert function_optional_enum.to_json() == rf.schema
     assert function_optional_enum.tags == []
 
     # Verify it is possible to invoke the function with the parsed value
@@ -559,7 +590,7 @@ def test_function_optional_enum():
 ##################################################
 
 
-@GPTEnabled
+@EnableTool
 def function_typing_list(a: int, b: str, c: bool = False, d: List[int] = [1, 2, 3]):
     """
     This is a test function.
@@ -574,7 +605,7 @@ def function_typing_list(a: int, b: str, c: bool = False, d: List[int] = [1, 2, 
 
 def test_function_typing_list():
     rf = ReferenceSchema(function_typing_list)
-    assert function_typing_list.schema.to_json() == rf.schema
+    assert function_typing_list.to_json() == rf.schema
     assert function_typing_list.tags == []
 
 
@@ -583,7 +614,7 @@ def test_function_typing_list():
 ##############################################################
 
 
-@GPTEnabled
+@EnableTool
 def function_typing_list_no_type(a: int, b: str, c: bool = False, d: List = [1, 2, 3]):
     """
     This is a test function.
@@ -599,7 +630,7 @@ def function_typing_list_no_type(a: int, b: str, c: bool = False, d: List = [1, 
 def test_function_typing_list_no_type():
     rf = ReferenceSchema(function_typing_list_no_type)
     rf.get_param("d").pop("items")
-    assert function_typing_list_no_type.schema.to_json() == rf.schema
+    assert function_typing_list_no_type.to_json() == rf.schema
     assert function_typing_list_no_type.tags == []
 
 
@@ -609,7 +640,7 @@ def test_function_typing_list_no_type():
 
 
 # Docstring adapted from https://sphinx-rtd-tutorial.readthedocs.io/en/latest/docstrings.html
-@GPTEnabled
+@EnableTool
 def function_docstring(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """Returns a list containing :class:`bluepy.btle.Characteristic`
     objects for the peripheral. If no arguments are given, will return all
@@ -667,7 +698,7 @@ def test_function_docstring():
     rf.get_param("c")["description"] = "End index, defaults to 0xFFFF"
     rf.get_param("d")["description"] = "A list of UUID strings, defaults to None"
 
-    assert function_docstring.schema.to_json() == rf.schema
+    assert function_docstring.to_json() == rf.schema
     assert function_docstring.tags == []
 
 
@@ -676,7 +707,7 @@ def test_function_docstring():
 ######################################################
 
 
-@GPTEnabled
+@EnableTool
 def function_typing_literal_int(
     a: Literal[1, 2, 3], b: str, c: bool = False, d: list[int] = [1, 2, 3]
 ):
@@ -695,11 +726,11 @@ def test_function_typing_literal_int():
     # Check schema
     rf = ReferenceSchema(function_typing_literal_int)
     rf.get_param("a")["enum"] = [1, 2, 3]
-    assert function_typing_literal_int.schema.to_json() == rf.schema
+    assert function_typing_literal_int.to_json() == rf.schema
     assert function_typing_literal_int.tags == []
 
 
-@GPTEnabled
+@EnableTool
 def function_typing_literal_string(
     a: Literal["a", "b", "c"], b: str, c: bool = False, d: list[int] = [1, 2, 3]
 ):
@@ -719,7 +750,7 @@ def test_function_typing_literal_string():
     rf = ReferenceSchema(function_typing_literal_string)
     rf.get_param("a")["enum"] = ["a", "b", "c"]
     rf.get_param("a")["type"] = "string"
-    assert function_typing_literal_string.schema.to_json() == rf.schema
+    assert function_typing_literal_string.to_json() == rf.schema
     assert function_typing_literal_string.tags == []
 
 
@@ -728,7 +759,7 @@ def test_function_typing_literal_string():
 #################################################
 
 
-@GPTEnabled
+@EnableTool
 def function_custom_enum(a: CustomEnum, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
     This is a test function.
@@ -746,7 +777,7 @@ def test_function_custom_enum():
     a = rf.get_param("a")
     a["type"] = "string"
     a["enum"] = [x.name for x in CustomEnum]
-    assert function_custom_enum.schema.to_json() == rf.schema
+    assert function_custom_enum.to_json() == rf.schema
     assert function_custom_enum.tags == []
 
     # Try invoking the function to verify that "A" is converted to CustomEnum.A,
@@ -767,7 +798,7 @@ def test_function_custom_enum():
     assert a == CustomEnum.A
 
 
-@GPTEnabled
+@EnableTool
 def function_custom_enum_default_value(
     a: int, b: CustomEnum = CustomEnum.B, c: bool = False, d: list[int] = [1, 2, 3]
 ):
@@ -789,11 +820,11 @@ def test_function_custom_enum_default_value():
     b["type"] = "string"
     b["default"] = "B"
     b["enum"] = [x.name for x in CustomEnum]
-    assert function_custom_enum_default_value.schema.to_json() == rf.schema
+    assert function_custom_enum_default_value.to_json() == rf.schema
     assert function_custom_enum_default_value.tags == []
 
 
-@GPTEnabled
+@EnableTool
 def function_custom_enum_list(
     a: int,
     b: str,
@@ -817,7 +848,7 @@ def test_function_custom_enum_list():
     b["default"] = ["A", "B"]
     b["items"] = {"type": "string", "enum": ["A", "B", "C"]}
 
-    assert function_custom_enum_list.schema.to_json() == rf.schema
+    assert function_custom_enum_list.to_json() == rf.schema
     assert function_custom_enum_list.tags == []
 
     # Verify we can invoke the function providing the encoded enum value
@@ -846,7 +877,7 @@ def test_function_custom_enum_list():
 ###########################
 
 
-@GPTEnabled(ignore_parameters=["a", "d"])
+@EnableTool(ignore_parameters=["a", "d"])
 def function_ignore_parameters(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
     This is a test function.
@@ -863,9 +894,9 @@ def test_function_ignore_parameters():
     rf = ReferenceSchema(function_ignore_parameters)
     rf.remove_param("a")
     rf.remove_param("d")
-    assert function_ignore_parameters.schema.to_json() == rf.schema
-    assert function_ignore_parameters.schema.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
-    assert function_ignore_parameters.schema.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
+    assert function_ignore_parameters.to_json() == rf.schema
+    assert function_ignore_parameters.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
+    assert function_ignore_parameters.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
     assert function_ignore_parameters.tags == []
 
 
@@ -874,7 +905,7 @@ def test_function_ignore_parameters():
 #######################################
 
 
-@GPTEnabled(ignore_parameter_descriptions=True)
+@EnableTool(ignore_parameter_descriptions=True)
 def function_ignore_parameter_descriptions(
     a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]
 ):
@@ -892,9 +923,9 @@ def function_ignore_parameter_descriptions(
 def test_function_ignore_parameter_descriptions():
     rf = ReferenceSchema(function_ignore_parameter_descriptions)
     rf.remove_parameter_descriptions()
-    assert function_ignore_parameter_descriptions.schema.to_json() == rf.schema
-    assert function_ignore_parameter_descriptions.schema.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
-    assert function_ignore_parameter_descriptions.schema.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
+    assert function_ignore_parameter_descriptions.to_json() == rf.schema
+    assert function_ignore_parameter_descriptions.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
+    assert function_ignore_parameter_descriptions.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
     assert function_ignore_parameter_descriptions.tags == []
 
 
@@ -903,7 +934,7 @@ def test_function_ignore_parameter_descriptions():
 #####################################
 
 
-@GPTEnabled(ignore_function_description=True)
+@EnableTool(ignore_function_description=True)
 def function_ignore_function_description(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
     This is a test function.
@@ -919,9 +950,9 @@ def function_ignore_function_description(a: int, b: str, c: bool = False, d: lis
 def test_function_ignore_function_description():
     rf = ReferenceSchema(function_ignore_function_description)
     rf.get_function().pop("description")
-    assert function_ignore_function_description.schema.to_json() == rf.schema
-    assert function_ignore_function_description.schema.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
-    assert function_ignore_function_description.schema.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
+    assert function_ignore_function_description.to_json() == rf.schema
+    assert function_ignore_function_description.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
+    assert function_ignore_function_description.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
     assert function_ignore_function_description.tags == []
 
 
@@ -930,7 +961,7 @@ def test_function_ignore_function_description():
 ###############################
 
 
-@GPTEnabled(ignore_all_parameters=True)
+@EnableTool(ignore_all_parameters=True)
 def function_ignore_all_parameters(a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]):
     """
     This is a test function.
@@ -946,15 +977,15 @@ def function_ignore_all_parameters(a: int, b: str, c: bool = False, d: list[int]
 def test_function_ignore_all_parameters():
     rf = ReferenceSchema(function_ignore_all_parameters)
     rf.get_function().pop("parameters")
-    assert function_ignore_all_parameters.schema.to_json() == rf.schema
+    assert function_ignore_all_parameters.to_json() == rf.schema
 
 
 def test_function_ignore_all_parameters_tune():
     rf = ReferenceSchema(function_ignore_all_parameters)
     rf.get_parameters().pop("required")
     rf.get_parameters()["properties"] = {}
-    assert function_ignore_all_parameters.schema.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
-    assert function_ignore_all_parameters.schema.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
+    assert function_ignore_all_parameters.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
+    assert function_ignore_all_parameters.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
     assert function_ignore_all_parameters.tags == []
 
 
@@ -978,9 +1009,9 @@ def test_global_configuration_ignore_parameters(global_config):
     rf = ReferenceSchema(function)
     rf.remove_param("b")
     rf.remove_param("c")
-    assert function.schema.to_json() == rf.schema
-    assert function.schema.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
-    assert function.schema.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
+    assert function.to_json() == rf.schema
+    assert function.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
+    assert function.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
     assert function.tags == []
 
 
@@ -991,9 +1022,9 @@ def test_global_configuration_ignore_parameter_descriptions(global_config):
     rf = ReferenceSchema(function)
     rf.remove_parameter_descriptions()
 
-    assert function.schema.to_json() == rf.schema
-    assert function.schema.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
-    assert function.schema.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
+    assert function.to_json() == rf.schema
+    assert function.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
+    assert function.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
     assert function.tags == []
 
 
@@ -1004,9 +1035,9 @@ def test_global_configuration_ignore_function_description(global_config):
     rf = ReferenceSchema(function)
     rf.get_function().pop("description")
 
-    assert function.schema.to_json() == rf.schema
-    assert function.schema.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
-    assert function.schema.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
+    assert function.to_json() == rf.schema
+    assert function.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
+    assert function.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
     assert function.tags == []
 
 
@@ -1017,7 +1048,7 @@ def test_global_configuration_ignore_all_parameters(global_config):
     rf = ReferenceSchema(function)
     rf.get_function().pop("parameters")
 
-    assert function.schema.to_json() == rf.schema
+    assert function.to_json() == rf.schema
     assert function.tags == []
 
 
@@ -1029,8 +1060,8 @@ def test_global_configuration_ignore_all_parameters_tune(global_config):
     rf.get_parameters().pop("required")
     rf.get_parameters()["properties"] = {}
 
-    assert function.schema.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
-    assert function.schema.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
+    assert function.to_json(SchemaType.OPENAI_TUNE) == rf.tune_schema
+    assert function.to_json(SchemaType.ANTHROPIC_CLAUDE) == rf.anthropic_schema
     assert function.tags == []
 
 
@@ -1039,7 +1070,7 @@ def test_global_configuration_ignore_all_parameters_tune(global_config):
 ########################################
 
 
-@GPTEnabled(ignore_all_parameters=False)
+@EnableTool(ignore_all_parameters=False)
 def function_ignore_all_parameters_override(
     a: int, b: str, c: bool = False, d: list[int] = [1, 2, 3]
 ):
@@ -1058,4 +1089,4 @@ def test_function_ignore_all_parameters_override(global_config):
     # Verify that the function schema is not affected by the global configuration
     global_config.ignore_all_parameters = True
     rf = ReferenceSchema(function_ignore_all_parameters_override)
-    assert function_ignore_all_parameters_override.schema.to_json() == rf.schema
+    assert function_ignore_all_parameters_override.to_json() == rf.schema
