@@ -230,7 +230,7 @@ class ToolEnabled(Generic[P, T]):
 
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> T:
 
-        args_list: list = list(args)  # Tuple is immutable, thus convert to list
+        args_list = list(args)  # Tuple is immutable, thus convert to list
 
         for i, arg in enumerate(args_list):
             for p in self.schema.parameter_schemas.values():
@@ -243,7 +243,7 @@ class ToolEnabled(Generic[P, T]):
                 # Convert the JSON value to the type expected by the method
                 kwargs[key] = self.schema.parameter_schemas[key].type_schema.decode(kwargs[key])
 
-        return self.func(*tuple(args_list), **kwargs)
+        return self.func(*args_list, **kwargs)  # type: ignore
 
     def tool_enabled(self) -> bool:
         return True
