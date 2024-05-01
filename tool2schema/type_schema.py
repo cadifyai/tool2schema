@@ -93,14 +93,14 @@ class TypeSchema:
         """
         return {}
 
-    def _get_items(self) -> Union[dict, Parameter.empty]:
+    def _get_items(self) -> Union[dict, type[Parameter.empty]]:
         """
         Get the items property to be added to the JSON schema.
         Return `Parameter.empty` to omit the items from the schema.
         """
         return Parameter.empty
 
-    def _get_enum(self) -> Union[list, Parameter.empty]:
+    def _get_enum(self) -> Union[list, type[Parameter.empty]]:
         """
         Get the enum property to be added to the JSON schema.
         Return `Parameter.empty` to omit the enum from the schema.
@@ -145,7 +145,9 @@ class ValueTypeSchema(TypeSchema):
         return self.type == type(value)
 
     def _get_type(self) -> dict:
-        return {"type": self.TYPE_MAP.get(self.type.__name__, "object")}
+        if self.type is not None:
+            return {"type": self.TYPE_MAP.get(self.type.__name__, "object")}
+        return {"type": "null"}
 
 
 class GenericTypeSchema(TypeSchema):
@@ -157,7 +159,7 @@ class GenericTypeSchema(TypeSchema):
         """
         :return: A list of type schemas corresponding to the generic type arguments.
         """
-        return [TypeSchema.create(arg) for arg in typing.get_args(self.type)]
+        return [t for arg in typing.get_args(self.type) if (t := TypeSchema.create(arg)) is not None]
 
     def _get_sub_type(self) -> Optional[TypeSchema]:
         """
@@ -182,7 +184,7 @@ class ListTypeSchema(GenericTypeSchema):
     def _get_type(self) -> dict:
         return {"type": "array"}
 
-    def _get_items(self) -> Union[dict, Parameter.empty]:
+    def _get_items(self) -> Union[dict, type[Parameter.empty]]:
         if sub_type := self._get_sub_type():
             return sub_type.to_json()
 
@@ -260,9 +262,11 @@ class EnumTypeSchema(TypeSchema):
         self.enum_values = enum_values
 
     def _get_type(self) -> dict:
-        return TypeSchema.create(type(self.enum_values[0]))._get_type()
+        if (t := TypeSchema.create(type(self.enum_values[0]))) is not None:
+            return t._get_type()
+        return {"type": "object"}
 
-    def _get_enum(self) -> Union[list, Parameter.empty]:
+    def _get_enum(self) -> Union[list, type[Parameter.empty]]:
         return self.enum_values
 
     def validate(self, value) -> bool:
@@ -275,12 +279,12 @@ class EnumClassTypeSchema(EnumTypeSchema):
     Type schema for enum.Enum types.
     """
 
-    def __init__(self, p_type: Enum):
+    def __init__(self, p_type: Type[Enum]):
         super().__init__([e.name for e in p_type], p_type)
 
     @staticmethod
-    def matches(type_p: Type) -> bool:
-        return type_p != Parameter.empty and isclass(type_p) and issubclass(type_p, Enum)
+    def matches(p_type: Type) -> bool:
+        return p_type != Parameter.empty and isclass(p_type) and issubclass(p_type, Enum)
 
     def encode(self, value):
         """
@@ -296,7 +300,7 @@ class EnumClassTypeSchema(EnumTypeSchema):
 
         :param value: The enum name to be converted
         """
-        if value in self.enum_values:
+        if value in self.enum_values and self.type is not None:
             # Convert to an enum instance
             return self.type[value]
 

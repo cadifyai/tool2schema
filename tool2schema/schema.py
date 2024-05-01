@@ -8,7 +8,7 @@ import re
 import sys
 from inspect import Parameter
 from types import ModuleType
-from typing import Any, Callable, Generic, Optional, TypeVar, overload
+from typing import Any, Callable, Generic, Literal, Optional, TypeVar, Union, overload
 
 import tool2schema
 from tool2schema.config import Config, SchemaType
@@ -48,6 +48,7 @@ def FindToolEnabledByName(module: ModuleType, name: str) -> Optional[ToolEnabled
     :param module: Module to search for ToolEnabled functions
     :param name: Name of the function to find
     """
+    func: ToolEnabled
     for func in FindToolEnabled(module):
         if func.__name__ == name:
             return func
@@ -224,24 +225,25 @@ class ToolEnabled(Generic[P, T]):
         self.tags = kwargs.pop("tags", [])
         self.config = Config(tool2schema.CONFIG, **kwargs)
         self.schema = FunctionSchema(func, self.config)
+        self.__name__ = func.__name__
         functools.update_wrapper(self, func)
 
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> T:
 
-        args = list(args)  # Tuple is immutable, thus convert to list
+        args_list: list = list(args)  # Tuple is immutable, thus convert to list
 
-        for i, arg in enumerate(args):
+        for i, arg in enumerate(args_list):
             for p in self.schema.parameter_schemas.values():
                 if p.index == i:
                     # Convert the JSON value to the type expected by the method
-                    args[i] = p.type_schema.decode(arg)
+                    args_list[i] = p.type_schema.decode(arg)
 
         for key in kwargs:
             if key in self.schema.parameter_schemas:
                 # Convert the JSON value to the type expected by the method
                 kwargs[key] = self.schema.parameter_schemas[key].type_schema.decode(kwargs[key])
 
-        return self.func(*args, **kwargs)
+        return self.func(*tuple(args_list), **kwargs)
 
     def tool_enabled(self) -> bool:
         return True
@@ -264,10 +266,10 @@ def EnableTool(func: Callable[P, T], **kwargs) -> ToolEnabled[P, T]: ...
 
 
 @overload
-def EnableTool(**kwargs) -> Callable[[Callable[P, T]], ToolEnabled[P, T]]: ...
+def EnableTool(func: Literal[None] = None, **kwargs) -> Callable[[Callable[P, T]], ToolEnabled[P, T]]: ...
 
 
-def EnableTool(func=None, **kwargs):
+def EnableTool(func: Optional[Callable[P, T]] = None, **kwargs) -> Union[ToolEnabled[P, T], Callable[[Callable[P, T]], ToolEnabled[P, T]]]:
     """Decorator to generate a function schema for OpenAI."""
     if func is not None:
         return ToolEnabled(func, **kwargs)
