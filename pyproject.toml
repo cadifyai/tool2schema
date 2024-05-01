@@ -19,7 +19,7 @@ executionEnvironments = [
 [tool.poetry]
 name = "tool2schema"
 version = "v2.0.0"
-description = "A library to generate function schemas for use in the OpenAI API."
+description = "A library to generate function schemas for use in LLM function calling."
 authors = ["Angus Stewart <siliconlad@protonmail.com>"]
 license = "Apache-2.0"
 readme = "README.md"
