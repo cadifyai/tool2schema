@@ -28,55 +28,75 @@ class Config:
         """
         Type of the schema to create.
         """
-        return self._get_setting(Config.schema_type.fget.__name__, SchemaType.OPENAI_API)
+        default_value = SchemaType.OPENAI_API
+        if (fget := Config.schema_type.fget) is not None:
+            return self._get_setting(fget.__name__, default_value)
+        return default_value
 
     @schema_type.setter
     def schema_type(self, value: SchemaType):
-        self._set_setting(Config.schema_type.fget.__name__, value)
+        if (fget := Config.schema_type.fget) is not None:
+            self._set_setting(fget.__name__, value)
 
     @property
     def ignore_parameters(self) -> list[str]:
         """
         List of parameter names to ignore when creating a schema.
         """
-        return self._get_setting(Config.ignore_parameters.fget.__name__, ["self", "args", "kwargs"])
+        default_value = ["self", "args", "kwargs"]
+        if (fget := Config.ignore_parameters.fget) is not None:
+            return self._get_setting(fget.__name__, default_value)
+        return default_value
 
     @ignore_parameters.setter
     def ignore_parameters(self, value: list[str]):
-        self._set_setting(Config.ignore_parameters.fget.__name__, value)
+        if (fget := Config.ignore_parameters.fget) is not None:
+            self._set_setting(fget.__name__, value)
 
     @property
     def ignore_function_description(self) -> bool:
         """
         When true, omit the function description from the schema.
         """
-        return self._get_setting(Config.ignore_function_description.fget.__name__, False)
+        default_value = False
+        if (fget := Config.ignore_function_description.fget) is not None:
+            return self._get_setting(fget.__name__, default_value)
+        return default_value
 
     @ignore_function_description.setter
     def ignore_function_description(self, value: bool):
-        self._set_setting(Config.ignore_function_description.fget.__name__, value)
+        if (fget := Config.ignore_function_description.fget) is not None:
+            self._set_setting(fget.__name__, value)
 
     @property
     def ignore_parameter_descriptions(self) -> bool:
         """
         When true, omit the parameter descriptions from the schema.
         """
-        return self._get_setting(Config.ignore_parameter_descriptions.fget.__name__, False)
+        default_value = False
+        if (fget := Config.ignore_parameter_descriptions.fget) is not None:
+            return self._get_setting(fget.__name__, default_value)
+        return default_value
 
     @ignore_parameter_descriptions.setter
     def ignore_parameter_descriptions(self, value: bool):
-        self._set_setting(Config.ignore_parameter_descriptions.fget.__name__, value)
+        if (fget := Config.ignore_parameter_descriptions.fget) is not None:
+            self._set_setting(fget.__name__, value)
 
     @property
     def ignore_all_parameters(self) -> bool:
         """
         When true, omit all parameters from the schema.
         """
-        return self._get_setting(Config.ignore_all_parameters.fget.__name__, False)
+        default_value = False
+        if (fget := Config.ignore_all_parameters.fget) is not None:
+            return self._get_setting(fget.__name__, default_value)
+        return default_value
 
     @ignore_all_parameters.setter
     def ignore_all_parameters(self, value: bool):
-        self._set_setting(Config.ignore_all_parameters.fget.__name__, value)
+        if (fget := Config.ignore_all_parameters.fget) is not None:
+            self._set_setting(fget.__name__, value)
 
     def reset_default(self):
         """

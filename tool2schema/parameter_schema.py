@@ -53,7 +53,10 @@ class ParameterSchema:
         if type_schema := TypeSchema.create(parameter.annotation):
             return ParameterSchema(type_schema, parameter, index, config, docstring)
 
-    def _get_description(self) -> Union[str, Parameter.empty]:
+    def _test(self) -> type[Parameter.empty]:
+        return Parameter.empty
+
+    def _get_description(self) -> Union[str, type[Parameter.empty]]:
         """
         Get the description of this parameter, extracted from the function docstring,
         to be added to the JSON schema. Return `Parameter.empty` to omit the description

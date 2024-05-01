@@ -12,9 +12,6 @@ reportMissingImports = true
 reportMissingModuleSource = false
 pythonVersion = "3.11"
 pythonPlatform = "Windows"
-executionEnvironments = [
-    { root = "tool2schema" }
-]
 
 [tool.poetry]
 name = "tool2schema"
