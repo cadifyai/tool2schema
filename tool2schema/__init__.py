@@ -1,5 +1,5 @@
 # flake8: noqa
-__version__ = "v2.1.0"
+__version__ = "v2.2.0"
 
 from .config import Config, SchemaType
 from .schema import (
