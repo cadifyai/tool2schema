@@ -280,6 +280,7 @@ class EnumClassTypeSchema(EnumTypeSchema):
     """
 
     def __init__(self, p_type: Type[Enum]):
+        self.type: Type[Enum]
         super().__init__([e.name for e in p_type], p_type)
 
     @staticmethod
